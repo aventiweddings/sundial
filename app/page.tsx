@@ -42,11 +42,11 @@ export default async function HomePage() {
         <VeilBackground />
         <SundialCursor>
         <div className="relative z-10 flex flex-col items-center w-full">
-        <div className="w-48 h-48 relative mx-auto mb-8">
+        <div className="w-56 h-56 relative mx-auto mb-8">
           <Image src="/Logo.png" alt="Sundial" fill className="object-contain" />
         </div>
 
-        <h1 className="font-playfair text-5xl sm:text-7xl text-slate-800 leading-tight mb-10 max-w-3xl">
+        <h1 className="font-playfair text-3xl sm:text-5xl text-slate-800 leading-snug mb-10 max-w-2xl">
           Crafted by wedding professionals,<br />built for every timeline under the sun.
         </h1>
 
