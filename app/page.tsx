@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import Footer from '@/components/layout/Footer';
 import VeilBackground from '@/components/landing/VeilBackground';
+import SundialCursor from '@/components/landing/SundialCursor';
 
 export default async function HomePage() {
   const supabase = await createClient();
@@ -39,6 +40,7 @@ export default async function HomePage() {
       {/* Hero */}
       <main className="flex-1 flex flex-col items-center justify-center px-6 py-24 text-center relative overflow-hidden">
         <VeilBackground />
+        <SundialCursor>
         <div className="relative z-10 flex flex-col items-center w-full">
         <div className="w-48 h-48 relative mx-auto mb-8">
           <Image src="/Logo.png" alt="Sundial" fill className="object-contain" />
@@ -101,6 +103,7 @@ export default async function HomePage() {
             ))}
           </div>
         </div>
+        </SundialCursor>
       </main>
 
       <Footer />
