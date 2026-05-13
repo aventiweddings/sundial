@@ -19,10 +19,12 @@ export async function POST(req: NextRequest) {
     if (filename.endsWith('.txt')) {
       text = buffer.toString('utf-8');
     } else if (filename.endsWith('.pdf')) {
-      const pdfParseModule = await import('pdf-parse');
-      const pdfParse = (pdfParseModule as unknown as { default: (buf: Buffer) => Promise<{ text: string }> }).default ?? pdfParseModule;
-      const data = await pdfParse(buffer);
-      text = data.text;
+      // pdf-parse v2 uses a class-based API
+      const { PDFParse } = await import('pdf-parse');
+      const parser = new PDFParse({ data: new Uint8Array(buffer) });
+      const result = await parser.getText();
+      text = result.text;
+      await parser.destroy();
     } else if (filename.endsWith('.docx')) {
       const mammoth = await import('mammoth');
       const result = await mammoth.extractRawText({ buffer });
@@ -31,8 +33,20 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Unsupported file type. Use PDF, .docx, or .txt' }, { status: 400 });
     }
 
+    if (!text || !text.trim()) {
+      return NextResponse.json(
+        { error: 'Document appears empty or contains only images. Please try a text-based PDF or Word document.' },
+        { status: 422 }
+      );
+    }
+
     return NextResponse.json({ text: text.trim() });
-  } catch {
-    return NextResponse.json({ error: 'Failed to parse document' }, { status: 500 });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error('[parse-document] Error:', message, err instanceof Error ? err.stack : '');
+    return NextResponse.json(
+      { error: `Failed to parse document: ${message}` },
+      { status: 500 }
+    );
   }
 }
