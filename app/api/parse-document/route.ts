@@ -19,12 +19,10 @@ export async function POST(req: NextRequest) {
     if (filename.endsWith('.txt')) {
       text = buffer.toString('utf-8');
     } else if (filename.endsWith('.pdf')) {
-      // pdf-parse v2 uses a class-based API
-      const { PDFParse } = await import('pdf-parse');
-      const parser = new PDFParse({ data: new Uint8Array(buffer) });
-      const result = await parser.getText();
-      text = result.text;
-      await parser.destroy();
+      // pdf-parse v1 — dynamic import to keep it server-only
+      const pdfParse = (await import('pdf-parse')).default;
+      const data = await pdfParse(buffer);
+      text = data.text;
     } else if (filename.endsWith('.docx')) {
       const mammoth = await import('mammoth');
       const result = await mammoth.extractRawText({ buffer });
