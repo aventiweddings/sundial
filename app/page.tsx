@@ -67,7 +67,7 @@ export default async function HomePage() {
         </div>{/* end z-10 wrapper */}
 
         {/* How it works */}
-        <div className="mt-24 w-full max-w-4xl">
+        <div className="mt-24 w-full max-w-4xl relative z-10">
           <div className="flex items-center gap-3 mb-10 justify-center">
             <div className="flex-1 h-px bg-[#C9A84C]/20 max-w-24" />
             <span className="text-xs font-semibold tracking-widest text-[#C9A84C] uppercase">How it works</span>
@@ -90,7 +90,7 @@ export default async function HomePage() {
         </div>
 
         {/* Feature highlights */}
-        <div className="mt-20 w-full max-w-3xl">
+        <div className="mt-20 w-full max-w-3xl relative z-10">
           <div className="flex flex-wrap justify-center gap-x-8 gap-y-3">
             {[
               'Golden hour auto-scheduled', 'Vendor coverage enforced',
