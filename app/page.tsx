@@ -20,7 +20,7 @@ export default async function HomePage() {
             <div className="w-8 h-8 relative">
               <Image src="/Logo.png" alt="Sundial" fill className="object-contain" />
             </div>
-            <span className="font-playfair text-xl text-slate-800">Sundial</span>
+            <span className="font-playfair text-xl text-slate-800">Sundial Timelines</span>
           </div>
           <nav className="flex items-center gap-1">
             <Link href="/pricing" className="hidden sm:inline-flex px-3 py-1.5 text-sm text-slate-600 hover:text-slate-900 rounded-lg hover:bg-slate-100 transition-colors">
@@ -44,18 +44,11 @@ export default async function HomePage() {
           <Image src="/Logo.png" alt="Sundial" fill className="object-contain" />
         </div>
 
-        <h1 className="font-playfair text-5xl sm:text-7xl text-slate-800 leading-tight mb-6 max-w-3xl">
+        <h1 className="font-playfair text-5xl sm:text-7xl text-slate-800 leading-tight mb-10 max-w-3xl">
           Crafted by wedding professionals,<br />built for every timeline under the sun.
         </h1>
 
-        <p className="text-sm text-slate-500 max-w-lg leading-relaxed mb-10">
-          For couples who want every moment to flow.<br />
-          For vendors who can&apos;t afford a single conflict.<br />
-          <br />
-          Every timeline starts with the light. Golden hour lands exactly where it should, every vendor&apos;s window holds the day together, and your finished timeline is ready before the call ends.
-        </p>
-
-        <div className="flex flex-col sm:flex-row items-center gap-3">
+        <div className="flex flex-col sm:flex-row items-center gap-3 mb-12">
           <Button asChild size="lg" className="bg-[#C9A84C] hover:bg-[#b8973b] text-white px-8 h-12 text-base">
             <Link href="/sign-up">Start for free</Link>
           </Button>
@@ -63,6 +56,12 @@ export default async function HomePage() {
             <Link href="/pricing">View pricing</Link>
           </Button>
         </div>
+
+        <p className="text-sm text-slate-500 max-w-xl leading-relaxed">
+          For couples who want every moment to flow.
+          For vendors who can&apos;t afford a single conflict.<br /><br />
+          Every timeline we create focuses on ensuring that you get the best timing for photography with the sun, and that all your other desired details are weighed against real, time-tested timeframes from countless weddings. Golden hour lands exactly where it should; every vendor&apos;s service window holds the day together. Creating the perfect wedding timeline has never been this easy.
+        </p>
         </div>{/* end z-10 wrapper */}
 
         {/* How it works */}
@@ -75,9 +74,9 @@ export default async function HomePage() {
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 text-left">
             {[
-              { step: '01', title: 'Enter wedding details', body: 'Couple type, locations, vendor coverage windows, and special notes. Manual entry, paste from email, or upload a doc.' },
-              { step: '02', title: 'We look up the sun', body: 'Sunset time and drive times between venues are calculated automatically before Claude builds the day.' },
-              { step: '03', title: 'Refine & export', body: 'Edit through conversation, view as a planner grid, audit existing timelines, and export to Word, PDF, or print.' },
+              { step: '01', title: 'Enter wedding details', body: 'Bring whatever you have. Fill out our guided form, paste notes from an email or planning call, or upload an existing doc. Already have a finished timeline? Hand it to Sundial Audit and we’ll tell you exactly what we’d change — and why.' },
+              { step: '02', title: 'We build it', body: 'We find your sunset, calculate every drive time, and build a complete timeline around your actual day. Golden hour is placed to the minute. Then Sunny — our timeline chatbot — refines it with you through a simple conversation.' },
+              { step: '03', title: 'Export & share', body: 'View your finished timeline as a clean document or a visual planner grid. Export to Word, PDF, or print — ready to share with your couple, your venue, and your whole vendor team in seconds.' },
             ].map((item) => (
               <div key={item.step} className="flex flex-col gap-3">
                 <span className="text-3xl font-playfair text-[#C9A84C]/40">{item.step}</span>
@@ -94,7 +93,7 @@ export default async function HomePage() {
             {[
               'Golden hour auto-scheduled', 'Vendor coverage enforced',
               'Timeline audit mode', 'Export to Word & PDF',
-              'Edit by conversation',
+              'Refine by conversation with Sunny',
             ].map((f) => (
               <span key={f} className="text-xs flex items-center gap-2 text-slate-500">
                 <span className="text-[#C9A84C]">✦</span>{f}

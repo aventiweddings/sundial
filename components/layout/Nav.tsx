@@ -27,7 +27,7 @@ export default function Nav({ user }: NavProps) {
           <div className="w-8 h-8 relative">
             <Image src="/Logo.png" alt="Sundial" fill className="object-contain" />
           </div>
-          <span className="font-playfair text-xl text-slate-800 tracking-tight">Sundial</span>
+          <span className="font-playfair text-xl text-slate-800 tracking-tight">Sundial Timelines</span>
         </Link>
 
         <nav className="flex items-center gap-1">

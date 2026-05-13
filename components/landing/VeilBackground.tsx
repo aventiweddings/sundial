@@ -59,23 +59,21 @@ void main() {
 
   float f = fbm(st + 4.0 * r);
 
-  // Map to very light warm tones — cream to soft white
-  // Base: #FAF7F2 = (0.980, 0.969, 0.949)
-  vec3 cream  = vec3(0.980, 0.969, 0.949);
-  vec3 white  = vec3(1.000, 0.998, 0.994);
-  vec3 silk   = vec3(0.993, 0.987, 0.976);
-  vec3 warm   = vec3(0.975, 0.962, 0.938);
+  // Flowing veil — visible warm/gold tones over cream background
+  vec3 cream  = vec3(0.96, 0.94, 0.90);
+  vec3 white  = vec3(1.00, 0.99, 0.97);
+  vec3 gold   = vec3(0.92, 0.88, 0.78);
+  vec3 blush  = vec3(0.95, 0.91, 0.86);
 
-  vec3 col = mix(cream, silk,  clamp(f * f * 4.0, 0.0, 1.0));
-       col = mix(col,   white, clamp(length(q),   0.0, 1.0));
-       col = mix(col,   warm,  clamp(r.x,          0.0, 1.0));
+  vec3 col = mix(cream, gold,   clamp(f * f * 4.0, 0.0, 1.0));
+       col = mix(col,   white,  clamp(length(q),   0.0, 1.0));
+       col = mix(col,   blush,  clamp(r.x,          0.0, 1.0));
 
-  // Subtle vignette — lighter in center
-  float vignette = 1.0 - 0.18 * length(uv - 0.5) * 2.2;
+  // Soft vignette
+  float vignette = 1.0 - 0.22 * length(uv - 0.5) * 2.2;
   col *= vignette;
 
-  // Very low opacity so it feels like sheer fabric overlay
-  float alpha = 0.55;
+  float alpha = 0.75;
   gl_FragColor = vec4(col, alpha);
 }
 `;

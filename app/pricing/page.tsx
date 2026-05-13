@@ -66,7 +66,59 @@ const FAQS = [
 export default function PricingPage() {
   const [annual, setAnnual] = useState(false);
   const [checkingOut, setCheckingOut] = useState<string | null>(null);
+  const [promoCode, setPromoCode] = useState('');
+  const [promoStatus, setPromoStatus] = useState<{ valid?: boolean; message?: string; plan?: string } | null>(null);
+  const [promoLoading, setPromoLoading] = useState(false);
   const router = useRouter();
+
+  const handlePromoValidate = async () => {
+    if (!promoCode.trim()) return;
+    setPromoLoading(true);
+    setPromoStatus(null);
+    try {
+      const res = await fetch('/api/promo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: promoCode }),
+      });
+      const data = await res.json();
+      if (data.valid) {
+        setPromoStatus({ valid: true, message: `${data.description} — ${data.plan_granted} plan`, plan: data.plan_granted });
+      } else {
+        setPromoStatus({ valid: false, message: data.error || 'Invalid code' });
+      }
+    } catch {
+      setPromoStatus({ valid: false, message: 'Something went wrong' });
+    } finally {
+      setPromoLoading(false);
+    }
+  };
+
+  const handlePromoRedeem = async () => {
+    setPromoLoading(true);
+    try {
+      const res = await fetch('/api/promo', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: promoCode }),
+      });
+      const data = await res.json();
+      if (res.status === 401) {
+        router.push('/sign-up');
+        return;
+      }
+      if (data.success) {
+        setPromoStatus({ valid: true, message: data.message, plan: data.plan });
+        setTimeout(() => router.push('/dashboard'), 1500);
+      } else {
+        setPromoStatus({ valid: false, message: data.error });
+      }
+    } catch {
+      setPromoStatus({ valid: false, message: 'Something went wrong' });
+    } finally {
+      setPromoLoading(false);
+    }
+  };
 
   const handleCheckout = async (planId: string) => {
     if (planId === 'free') { router.push('/sign-up'); return; }
@@ -94,7 +146,7 @@ export default function PricingPage() {
             <div className="w-8 h-8 relative">
               <Image src="/Logo.png" alt="Sundial" fill className="object-contain" />
             </div>
-            <span className="font-playfair text-xl text-slate-800">Sundial</span>
+            <span className="font-playfair text-xl text-slate-800">Sundial Timelines</span>
           </Link>
           <div className="flex items-center gap-1">
             <Link href="/sign-in" className="px-3 py-1.5 text-sm text-slate-600 hover:text-slate-900 rounded-lg hover:bg-slate-100 transition-colors">Sign in</Link>
@@ -187,6 +239,50 @@ export default function PricingPage() {
               )}
             </div>
           ))}
+        </div>
+
+        {/* Promo code */}
+        <div className="max-w-md mx-auto mb-20 text-center">
+          <div className="flex items-center gap-3 mb-6 justify-center">
+            <div className="flex-1 h-px bg-[#C9A84C]/20 max-w-16" />
+            <span className="text-xs font-semibold tracking-widest text-[#C9A84C] uppercase">Have a promo code?</span>
+            <div className="flex-1 h-px bg-[#C9A84C]/20 max-w-16" />
+          </div>
+
+          <div className="flex gap-2">
+            <input
+              type="text"
+              placeholder="Enter code"
+              value={promoCode}
+              onChange={(e) => { setPromoCode(e.target.value); setPromoStatus(null); }}
+              onKeyDown={(e) => e.key === 'Enter' && handlePromoValidate()}
+              className="flex-1 px-4 py-2.5 rounded-lg border border-slate-200 bg-white text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#C9A84C]/30 focus:border-[#C9A84C]/50 uppercase tracking-wider"
+            />
+            {promoStatus?.valid ? (
+              <Button
+                onClick={handlePromoRedeem}
+                disabled={promoLoading}
+                className="bg-[#C9A84C] hover:bg-[#b8973b] text-white px-6"
+              >
+                {promoLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Redeem'}
+              </Button>
+            ) : (
+              <Button
+                onClick={handlePromoValidate}
+                disabled={promoLoading || !promoCode.trim()}
+                variant="outline"
+                className="px-6"
+              >
+                {promoLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Apply'}
+              </Button>
+            )}
+          </div>
+
+          {promoStatus && (
+            <p className={`text-sm mt-3 ${promoStatus.valid ? 'text-green-600' : 'text-red-500'}`}>
+              {promoStatus.valid ? '✓' : '✕'} {promoStatus.message}
+            </p>
+          )}
         </div>
 
         {/* FAQ */}
