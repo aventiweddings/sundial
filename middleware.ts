@@ -6,24 +6,21 @@ const PROTECTED_PREFIXES = [
 ];
 
 export function middleware(request: NextRequest) {
-  const isProtected = PROTECTED_PREFIXES.some(p =>
-    request.nextUrl.pathname.startsWith(p)
+  const { pathname } = request.nextUrl;
+
+  const isProtected = PROTECTED_PREFIXES.some(p => pathname.startsWith(p));
+  if (!isProtected) return NextResponse.next();
+
+  // Any Supabase session cookie (sb-*-auth-token or chunked sb-*-auth-token.0)
+  const hasSession = request.cookies.getAll().some(
+    c => c.name.startsWith('sb-') && c.name.includes('-auth-token')
   );
 
-  if (isProtected) {
-    const projectRef = process.env.NEXT_PUBLIC_SUPABASE_URL
-      ?.replace('https://', '')
-      .split('.')[0] ?? '';
-    const cookieName = `sb-${projectRef}-auth-token`;
-    const hasSession = request.cookies.has(cookieName) ||
-      request.cookies.has(`${cookieName}.0`);
-
-    if (!hasSession) {
-      const url = request.nextUrl.clone();
-      url.pathname = '/sign-in';
-      url.searchParams.set('redirectTo', request.nextUrl.pathname);
-      return NextResponse.redirect(url);
-    }
+  if (!hasSession) {
+    const url = request.nextUrl.clone();
+    url.pathname = '/sign-in';
+    url.searchParams.set('redirectTo', pathname);
+    return NextResponse.redirect(url);
   }
 
   return NextResponse.next();
