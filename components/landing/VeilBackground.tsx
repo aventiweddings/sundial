@@ -59,21 +59,21 @@ void main() {
 
   float f = fbm(st + 4.0 * r);
 
-  // Flowing veil — visible warm/gold tones over cream background
-  vec3 cream  = vec3(0.96, 0.94, 0.90);
-  vec3 white  = vec3(1.00, 0.99, 0.97);
-  vec3 gold   = vec3(0.92, 0.88, 0.78);
-  vec3 blush  = vec3(0.95, 0.91, 0.86);
+  // Flowing veil — warm gold/blush tones, visible against #FAF7F2
+  vec3 cream  = vec3(0.96, 0.93, 0.87);
+  vec3 white  = vec3(1.00, 0.98, 0.95);
+  vec3 gold   = vec3(0.84, 0.74, 0.52);
+  vec3 blush  = vec3(0.92, 0.83, 0.74);
 
   vec3 col = mix(cream, gold,   clamp(f * f * 4.0, 0.0, 1.0));
        col = mix(col,   white,  clamp(length(q),   0.0, 1.0));
        col = mix(col,   blush,  clamp(r.x,          0.0, 1.0));
 
   // Soft vignette
-  float vignette = 1.0 - 0.22 * length(uv - 0.5) * 2.2;
+  float vignette = 1.0 - 0.15 * length(uv - 0.5) * 2.0;
   col *= vignette;
 
-  float alpha = 0.75;
+  float alpha = 0.9;
   gl_FragColor = vec4(col, alpha);
 }
 `;
@@ -152,7 +152,6 @@ export default function VeilBackground() {
     <canvas
       ref={canvasRef}
       className="absolute inset-0 w-full h-full pointer-events-none z-0"
-      style={{ opacity: 0.6 }}
     />
   );
 }
