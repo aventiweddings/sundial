@@ -9,40 +9,30 @@ void main() {
 }
 `;
 
+// Diamond shimmer — sparse, sharp light catches like a Tiffany solitaire
+// rotating slowly under gallery lighting. Platinum-white with the faintest
+// champagne warmth. Each sparkle is a tiny 4-point star that breathes in
+// and out on its own slow cycle.
 const FRAG = `
 precision highp float;
 uniform vec2 u_resolution;
 uniform float u_time;
 
-// Smooth noise helpers
-vec2 hash(vec2 p) {
-  p = vec2(dot(p, vec2(127.1, 311.7)), dot(p, vec2(269.5, 183.3)));
-  return -1.0 + 2.0 * fract(sin(p) * 43758.5453123);
+// Pseudo-random hash
+float hash(vec2 p) {
+  return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
 }
 
-float noise(vec2 p) {
-  vec2 i = floor(p);
-  vec2 f = fract(p);
-  vec2 u = f * f * (3.0 - 2.0 * f);
-  return mix(
-    mix(dot(hash(i + vec2(0,0)), f - vec2(0,0)),
-        dot(hash(i + vec2(1,0)), f - vec2(1,0)), u.x),
-    mix(dot(hash(i + vec2(0,1)), f - vec2(0,1)),
-        dot(hash(i + vec2(1,1)), f - vec2(1,1)), u.x), u.y
-  );
-}
-
-float fbm(vec2 p) {
-  float v = 0.0;
-  float a = 0.5;
-  vec2 shift = vec2(100.0);
-  mat2 rot = mat2(cos(0.5), sin(0.5), -sin(0.5), cos(0.5));
-  for (int i = 0; i < 5; i++) {
-    v += a * noise(p);
-    p = rot * p * 2.0 + shift;
-    a *= 0.5;
-  }
-  return v;
+// 4-point star shape — sharp cross falloff
+float star(vec2 uv, float size) {
+  vec2 a = abs(uv);
+  // Two crossed spikes
+  float spike1 = max(a.x * 8.0, a.y) / size;
+  float spike2 = max(a.x, a.y * 8.0) / size;
+  float s = min(spike1, spike2);
+  // Soft circular bloom underneath
+  float bloom = length(uv) / (size * 1.8);
+  return exp(-s * s * 3.0) + 0.3 * exp(-bloom * bloom * 6.0);
 }
 
 void main() {
@@ -50,31 +40,88 @@ void main() {
   float aspect = u_resolution.x / u_resolution.y;
   vec2 st = vec2(uv.x * aspect, uv.y);
 
-  float t = u_time * 0.09;
+  float shimmer = 0.0;
 
-  // Two layers of flowing fbm — offset in time and space
-  vec2 q = vec2(fbm(st + vec2(0.0, t)), fbm(st + vec2(5.2, t + 1.3)));
-  vec2 r = vec2(fbm(st + 4.0 * q + vec2(1.7, 9.2 + t * 0.5)),
-                fbm(st + 4.0 * q + vec2(8.3, 2.8 + t * 0.4)));
+  // Layer 1: primary sparkles — sparse grid
+  {
+    float scale = 12.0;
+    vec2 grid = floor(st * scale);
+    vec2 local = fract(st * scale) - 0.5;
 
-  float f = fbm(st + 4.0 * r);
+    // Jitter position within cell
+    float h = hash(grid);
+    float h2 = hash(grid + 100.0);
+    vec2 offset = vec2(h - 0.5, h2 - 0.5) * 0.7;
+    vec2 p = local - offset;
 
-  // Flowing veil — warm gold/blush tones, visible against #FAF7F2
-  vec3 cream  = vec3(0.96, 0.93, 0.87);
-  vec3 white  = vec3(1.00, 0.98, 0.95);
-  vec3 gold   = vec3(0.84, 0.74, 0.52);
-  vec3 blush  = vec3(0.92, 0.83, 0.74);
+    // Only ~18% of cells have a sparkle
+    float active = step(0.82, hash(grid + 50.0));
 
-  vec3 col = mix(cream, gold,   clamp(f * f * 4.0, 0.0, 1.0));
-       col = mix(col,   white,  clamp(length(q),   0.0, 1.0));
-       col = mix(col,   blush,  clamp(r.x,          0.0, 1.0));
+    // Slow breathing with unique phase per cell
+    float phase = hash(grid + 200.0) * 6.2832;
+    float speed = 0.3 + hash(grid + 300.0) * 0.25;
+    float breath = sin(u_time * speed + phase);
+    // Sharp on/off — only visible at the peak of the sine
+    float intensity = smoothstep(0.6, 0.95, breath) * active;
 
-  // Soft vignette
-  float vignette = 1.0 - 0.15 * length(uv - 0.5) * 2.0;
-  col *= vignette;
+    shimmer += star(p, 0.08) * intensity;
+  }
 
-  float alpha = 0.9;
-  gl_FragColor = vec4(col, alpha);
+  // Layer 2: smaller accent sparkles — offset grid, even sparser
+  {
+    float scale = 20.0;
+    vec2 shifted = st + vec2(3.7, 1.3);
+    vec2 grid = floor(shifted * scale);
+    vec2 local = fract(shifted * scale) - 0.5;
+
+    float h = hash(grid + 400.0);
+    float h2 = hash(grid + 500.0);
+    vec2 offset = vec2(h - 0.5, h2 - 0.5) * 0.6;
+    vec2 p = local - offset;
+
+    float active = step(0.88, hash(grid + 600.0));
+
+    float phase = hash(grid + 700.0) * 6.2832;
+    float speed = 0.2 + hash(grid + 800.0) * 0.2;
+    float breath = sin(u_time * speed + phase);
+    float intensity = smoothstep(0.65, 0.97, breath) * active;
+
+    shimmer += star(p, 0.05) * intensity * 0.6;
+  }
+
+  // Layer 3: rare large flares — very few, very slow
+  {
+    float scale = 6.0;
+    vec2 shifted = st + vec2(7.1, 4.9);
+    vec2 grid = floor(shifted * scale);
+    vec2 local = fract(shifted * scale) - 0.5;
+
+    float h = hash(grid + 900.0);
+    float h2 = hash(grid + 1000.0);
+    vec2 offset = vec2(h - 0.5, h2 - 0.5) * 0.5;
+    vec2 p = local - offset;
+
+    // Only ~8% of cells
+    float active = step(0.92, hash(grid + 1100.0));
+
+    float phase = hash(grid + 1200.0) * 6.2832;
+    float speed = 0.15 + hash(grid + 1300.0) * 0.1;
+    float breath = sin(u_time * speed + phase);
+    float intensity = smoothstep(0.7, 0.98, breath) * active;
+
+    shimmer += star(p, 0.12) * intensity * 0.4;
+  }
+
+  // Color: platinum white with the faintest champagne warmth
+  vec3 sparkleColor = vec3(1.0, 0.98, 0.94);
+
+  // Very subtle vignette — keep edges clean
+  float vignette = 1.0 - 0.1 * length(uv - 0.5);
+
+  float alpha = clamp(shimmer * vignette, 0.0, 1.0);
+  vec3 col = sparkleColor * shimmer * vignette;
+
+  gl_FragColor = vec4(col, alpha * 0.85);
 }
 `;
 
@@ -82,6 +129,9 @@ function createShader(gl: WebGLRenderingContext, type: number, src: string) {
   const shader = gl.createShader(type)!;
   gl.shaderSource(shader, src);
   gl.compileShader(shader);
+  if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+    console.error('[VeilBackground] Shader error:', gl.getShaderInfoLog(shader));
+  }
   return shader;
 }
 
@@ -101,6 +151,12 @@ export default function VeilBackground() {
     gl.attachShader(prog, vert!);
     gl.attachShader(prog, frag!);
     gl.linkProgram(prog);
+
+    if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) {
+      console.error('[VeilBackground] Program error:', gl.getProgramInfoLog(prog));
+      return;
+    }
+
     gl.useProgram(prog);
 
     // Full-screen quad
