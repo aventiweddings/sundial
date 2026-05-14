@@ -116,8 +116,8 @@ export default function ChatPanel({ timelineId, content, chatHistory, onTimeline
           onClick={() => setOpen(true)}
           className="fixed bottom-6 right-6 z-40 flex items-center gap-2 bg-[#C9A84C] hover:bg-[#b8973b] text-white rounded-full px-5 py-3 shadow-lg transition-all font-medium text-sm"
         >
-          <MessageCircle className="w-4 h-4" />
-          Edit with Sundial
+          <span className="text-base leading-none">☀️</span>
+          Chat with Sunny
         </button>
       )}
 
@@ -126,9 +126,14 @@ export default function ChatPanel({ timelineId, content, chatHistory, onTimeline
         <div className="fixed bottom-0 right-0 z-50 w-full sm:w-[420px] h-[600px] max-h-[90vh] bg-white rounded-t-2xl sm:rounded-2xl sm:bottom-6 sm:right-6 shadow-2xl border border-slate-200 flex flex-col">
           {/* Header */}
           <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
-            <div>
-              <p className="font-playfair font-semibold text-slate-900">Sundial Edit</p>
-              <p className="text-xs text-slate-500">Ask me to adjust your timeline</p>
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-amber-100 to-[#C9A84C]/20 flex items-center justify-center text-lg">
+                ☀️
+              </div>
+              <div>
+                <p className="font-playfair font-semibold text-slate-900">Sunny</p>
+                <p className="text-xs text-slate-500">Your timeline assistant</p>
+              </div>
             </div>
             <button
               onClick={() => setOpen(false)}
@@ -158,9 +163,14 @@ export default function ChatPanel({ timelineId, content, chatHistory, onTimeline
             )}
 
             {messages.map((msg, i) => (
-              <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+              <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} gap-2`}>
+                {msg.role === 'assistant' && (
+                  <div className="w-6 h-6 rounded-full bg-gradient-to-br from-amber-100 to-[#C9A84C]/20 flex items-center justify-center text-xs shrink-0 mt-1">
+                    ☀️
+                  </div>
+                )}
                 <div
-                  className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
+                  className={`max-w-[80%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
                     msg.role === 'user'
                       ? 'bg-[#C9A84C] text-white rounded-br-sm'
                       : 'bg-slate-100 text-slate-800 rounded-bl-sm'

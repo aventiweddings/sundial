@@ -30,7 +30,7 @@ const PLANS = [
     href: '/sign-up',
     trial: true,
     popular: false,
-    highlights: ['20 timelines/month', 'Unlimited audits', 'All exports (Word, PDF)', 'Sundial Edit chatbot'],
+    highlights: ['20 timelines/month', 'Unlimited audits', 'All exports (Word, PDF)', 'Sunny chatbot'],
   },
   {
     id: 'studio',

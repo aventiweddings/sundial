@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
@@ -8,10 +9,25 @@ import { Button } from '@/components/ui/button';
 
 interface NavProps {
   user?: { email?: string } | null;
+  plan?: string;
 }
 
-export default function Nav({ user }: NavProps) {
+export default function Nav({ user, plan: planProp }: NavProps) {
   const router = useRouter();
+  const [plan, setPlan] = useState(planProp || '');
+
+  // Fetch plan on mount when user is present and plan wasn't passed as prop
+  useEffect(() => {
+    if (!user || planProp) return;
+    const supabase = createClient();
+    supabase
+      .from('subscriptions')
+      .select('plan')
+      .single()
+      .then(({ data }) => {
+        if (data?.plan) setPlan(data.plan);
+      });
+  }, [user, planProp]);
 
   const handleSignOut = async () => {
     const supabase = createClient();
@@ -45,6 +61,11 @@ export default function Nav({ user }: NavProps) {
               <Link href="/settings" className="hidden sm:inline-flex px-3 py-1.5 text-sm text-slate-600 hover:text-slate-900 rounded-lg hover:bg-slate-100 transition-colors">
                 Settings
               </Link>
+              {plan && (
+                <span className="hidden sm:inline-flex items-center px-2.5 py-1 rounded-full bg-[#C9A84C]/10 text-[#C9A84C] text-xs font-semibold capitalize ml-1">
+                  {plan}
+                </span>
+              )}
               <button
                 onClick={handleSignOut}
                 className="ml-2 px-3 py-1.5 text-sm text-slate-500 hover:text-slate-700 rounded-lg hover:bg-slate-100 transition-colors"
