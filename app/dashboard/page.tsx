@@ -118,7 +118,7 @@ export default async function DashboardPage() {
 
             <div className="mb-4">
               <span className="inline-flex items-center px-3 py-1 rounded-full bg-[#C9A84C]/10 text-[#C9A84C] text-sm font-semibold capitalize">
-                {plan}
+                {plan === 'pro' ? 'Pro' : 'Free'}
               </span>
             </div>
 
@@ -145,19 +145,15 @@ export default async function DashboardPage() {
               <div className="flex justify-between">
                 <span className="text-slate-500">Export</span>
                 <span className={limits.canExport ? 'text-green-600 font-medium' : 'text-slate-400'}>
-                  {limits.canExport ? 'Included' : 'Upgrade required'}
+                  {limits.canExport ? 'Included' : 'Pro only'}
                 </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-500">Team seats</span>
-                <span className="text-slate-700 font-medium">{limits.teamSeats}</span>
               </div>
             </div>
 
             {plan === 'free' && (
               <Link href="/pricing">
                 <Button className="w-full mt-5 bg-[#C9A84C] hover:bg-[#b8973b] text-white text-sm">
-                  Upgrade plan
+                  Upgrade to Pro
                 </Button>
               </Link>
             )}

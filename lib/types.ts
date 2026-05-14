@@ -1,6 +1,6 @@
 export type CoupleType = 'Bride + Groom' | 'Bride + Bride' | 'Groom + Groom' | 'Partner + Partner';
 export type CeremonyType = 'Traditional' | 'Catholic' | 'Other';
-export type Plan = 'free' | 'solo' | 'studio' | 'agency';
+export type Plan = 'free' | 'pro';
 
 export interface VendorCoverage {
   vendorType: string;

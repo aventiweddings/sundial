@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { getUserPlan, PLAN_LIMITS } from '@/lib/plans';
-import { buildDocx } from '@/lib/export';
+import { buildDocx, ExportLayout } from '@/lib/export';
 
 export async function POST(req: NextRequest) {
   const supabase = await createClient();
@@ -10,11 +10,19 @@ export async function POST(req: NextRequest) {
 
   const plan = await getUserPlan(user.id);
   if (!PLAN_LIMITS[plan].canExport) {
-    return NextResponse.json({ error: 'Export requires a paid plan', plan }, { status: 403 });
+    return NextResponse.json({ error: 'Export requires a Pro plan', plan }, { status: 403 });
   }
 
-  const { timelineId, format = 'docx' } = await req.json();
+  const { timelineId, format = 'docx', layout = 'simple' }: {
+    timelineId?: string;
+    format?: string;
+    layout?: ExportLayout;
+  } = await req.json();
+
   if (!timelineId) return NextResponse.json({ error: 'timelineId required' }, { status: 400 });
+
+  const validLayouts: ExportLayout[] = ['simple', 'elegant', 'grid'];
+  const selectedLayout = validLayouts.includes(layout) ? layout : 'simple';
 
   const { data: timeline, error } = await supabase
     .from('saved_timelines')
@@ -32,7 +40,7 @@ export async function POST(req: NextRequest) {
     : '';
 
   if (format === 'docx') {
-    const buffer = await buildDocx(timeline.content, timeline.couple_name, weddingDate);
+    const buffer = await buildDocx(timeline.content, timeline.couple_name, weddingDate, selectedLayout);
     const filename = `${timeline.couple_name.replace(/[^a-z0-9]/gi, '-').toLowerCase()}-timeline.docx`;
     return new Response(buffer as unknown as BodyInit, {
       headers: {

@@ -1,19 +1,15 @@
 import { createClient } from '@/lib/supabase/server';
 
-export type Plan = 'free' | 'solo' | 'studio' | 'agency';
+export type Plan = 'free' | 'pro';
 
 export const PLAN_LIMITS: Record<Plan, {
   timelinesPerMonth: number;
   auditsPerMonth: number;
   canExport: boolean;
-  canCustomBrand: boolean;
-  teamSeats: number;
   savedTimelines: number;
 }> = {
-  free:   { timelinesPerMonth: 3,        auditsPerMonth: 1,        canExport: false, canCustomBrand: false, teamSeats: 1,  savedTimelines: 10  },
-  solo:   { timelinesPerMonth: 20,       auditsPerMonth: Infinity, canExport: true,  canCustomBrand: false, teamSeats: 1,  savedTimelines: 100 },
-  studio: { timelinesPerMonth: Infinity, auditsPerMonth: Infinity, canExport: true,  canCustomBrand: true,  teamSeats: 3,  savedTimelines: Infinity },
-  agency: { timelinesPerMonth: Infinity, auditsPerMonth: Infinity, canExport: true,  canCustomBrand: true,  teamSeats: 10, savedTimelines: Infinity },
+  free: { timelinesPerMonth: 1,        auditsPerMonth: 1,        canExport: false, savedTimelines: 3    },
+  pro:  { timelinesPerMonth: Infinity, auditsPerMonth: Infinity, canExport: true,  savedTimelines: Infinity },
 };
 
 export async function getUserPlan(userId: string): Promise<Plan> {

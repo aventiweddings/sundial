@@ -1,72 +1,40 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import Nav from '@/components/layout/Nav';
 import Footer from '@/components/layout/Footer';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Check } from 'lucide-react';
 
-const PLANS = [
-  {
-    id: 'free',
-    name: 'Free',
-    monthly: 0,
-    annual: 0,
-    cta: 'Get started free',
-    href: '/sign-up',
-    trial: false,
-    popular: false,
-    highlights: ['3 timelines/month', '1 audit/month', 'Document view', 'No export'],
-  },
-  {
-    id: 'solo',
-    name: 'Solo',
-    monthly: 19,
-    annual: 159,
-    cta: 'Start 7-day free trial',
-    href: '/sign-up',
-    trial: true,
-    popular: false,
-    highlights: ['20 timelines/month', 'Unlimited audits', 'All exports (Word, PDF)', 'Sunny chatbot'],
-  },
-  {
-    id: 'studio',
-    name: 'Studio',
-    monthly: 49,
-    annual: 399,
-    cta: 'Start 7-day free trial',
-    href: '/sign-up',
-    trial: true,
-    popular: true,
-    highlights: ['Unlimited timelines', 'Unlimited audits', '3 team seats', 'Custom branding on exports'],
-  },
-  {
-    id: 'agency',
-    name: 'Agency',
-    monthly: 99,
-    annual: 799,
-    cta: 'Get started',
-    href: '/sign-up',
-    trial: false,
-    popular: false,
-    highlights: ['Unlimited everything', '10 team seats', 'White-label exports', 'Priority support'],
-  },
+const FREE_HIGHLIGHTS = [
+  '1 timeline/month',
+  '1 audit/month',
+  'Document view only',
+  'Sunny chatbot',
+];
+
+const PRO_HIGHLIGHTS = [
+  'Unlimited timelines',
+  'Unlimited audits',
+  'All exports (Word, PDF)',
+  '3 layout styles',
+  'Sunny chatbot',
+  'Priority support',
 ];
 
 const FAQS = [
   { q: 'Can I cancel anytime?', a: 'Yes — cancel any time from your billing page. You keep access through the end of your billing period.' },
   { q: 'Do I need a credit card for the free plan?', a: 'No. Sign up with just your email — no card required until you upgrade.' },
-  { q: 'How does the free trial work?', a: 'Solo and Studio plans include a 7-day free trial. You can cancel before the trial ends and you won\'t be charged.' },
-  { q: 'Can I change plans?', a: 'Yes — upgrade or downgrade anytime from your settings page. Changes take effect immediately.' },
+  { q: 'How does the free trial work?', a: 'Pro includes a 7-day free trial. Cancel before the trial ends and you won\'t be charged.' },
+  { q: 'Can I switch between monthly and annual?', a: 'Yes — switch anytime from your billing page. Changes take effect at your next billing cycle.' },
 ];
 
 export default function PricingPage() {
-  const [annual, setAnnual] = useState(false);
-  const [checkingOut, setCheckingOut] = useState<string | null>(null);
+  const [annual, setAnnual] = useState(true);
+  const [checkingOut, setCheckingOut] = useState(false);
   const [promoCode, setPromoCode] = useState('');
   const [promoStatus, setPromoStatus] = useState<{ valid?: boolean; message?: string; plan?: string } | null>(null);
   const [promoLoading, setPromoLoading] = useState(false);
@@ -92,7 +60,7 @@ export default function PricingPage() {
       });
       const data = await res.json();
       if (data.valid) {
-        setPromoStatus({ valid: true, message: `${data.description} — ${data.plan_granted} plan`, plan: data.plan_granted });
+        setPromoStatus({ valid: true, message: `${data.description} — Pro plan`, plan: data.plan_granted });
       } else {
         setPromoStatus({ valid: false, message: data.error || 'Invalid code' });
       }
@@ -129,28 +97,31 @@ export default function PricingPage() {
     }
   };
 
-  const handleCheckout = async (planId: string) => {
-    if (planId === 'free') { router.push('/sign-up'); return; }
-    setCheckingOut(planId);
+  const handleCheckout = async () => {
+    setCheckingOut(true);
     try {
       const res = await fetch('/api/billing/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ plan: planId, interval: annual ? 'annual' : 'monthly' }),
+        body: JSON.stringify({ plan: 'pro', interval: annual ? 'annual' : 'monthly' }),
       });
       if (res.status === 401) { router.push('/sign-up'); return; }
       const data = await res.json();
       if (data.url) window.location.href = data.url;
     } finally {
-      setCheckingOut(null);
+      setCheckingOut(false);
     }
   };
+
+  const monthlyPrice = 39;
+  const annualTotal = 399;
+  const annualMonthly = Math.round(annualTotal / 12);
 
   return (
     <div className="min-h-screen bg-[#FAF7F2] flex flex-col">
       <Nav user={user} />
 
-      <main className="flex-1 max-w-6xl mx-auto px-6 py-16 w-full">
+      <main className="flex-1 max-w-4xl mx-auto px-6 py-16 w-full">
         <div className="text-center mb-12">
           <h1 className="font-playfair text-4xl sm:text-5xl text-slate-800 mb-4">Simple, honest pricing</h1>
           <p className="text-slate-500 text-lg max-w-md mx-auto">
@@ -168,70 +139,82 @@ export default function PricingPage() {
             </button>
             <span className={`text-sm ${annual ? 'text-slate-800 font-medium' : 'text-slate-400'}`}>
               Annual
-              <Badge className="ml-2 bg-[#C9A84C]/10 text-[#C9A84C] border-[#C9A84C]/20 text-xs">Save ~30%</Badge>
+              <Badge className="ml-2 bg-[#C9A84C]/10 text-[#C9A84C] border-[#C9A84C]/20 text-xs">Save ~15%</Badge>
             </span>
           </div>
         </div>
 
         {/* Plan cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-20">
-          {PLANS.map((plan) => (
-            <div
-              key={plan.id}
-              className={`flex flex-col rounded-2xl p-6 border transition-shadow ${
-                plan.popular
-                  ? 'border-[#C9A84C]/50 shadow-lg bg-white'
-                  : 'border-[#C9A84C]/15 bg-white/70'
-              }`}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-3xl mx-auto mb-20">
+          {/* Free */}
+          <div className="flex flex-col rounded-2xl p-6 border border-[#C9A84C]/15 bg-white/70">
+            <h2 className="font-playfair text-xl text-slate-800 mb-1">Free</h2>
+            <div className="flex items-end gap-1 mb-4">
+              <span className="text-3xl font-bold text-slate-800">Free</span>
+            </div>
+            <p className="text-sm text-slate-400 mb-4">No credit card required</p>
+
+            <ul className="space-y-2 flex-1 mb-6">
+              {FREE_HIGHLIGHTS.map((h) => (
+                <li key={h} className="flex items-start gap-2 text-sm text-slate-600">
+                  <Check className="w-4 h-4 text-[#C9A84C] mt-0.5 shrink-0" />
+                  {h}
+                </li>
+              ))}
+            </ul>
+
+            <Button
+              onClick={() => router.push('/sign-up')}
+              variant="outline"
+              className="w-full"
             >
-              {plan.popular && (
-                <Badge className="self-start mb-3 bg-[#C9A84C] text-white border-0 text-xs">Most Popular</Badge>
-              )}
-              <h2 className="font-playfair text-xl text-slate-800 mb-1">{plan.name}</h2>
-              <div className="flex items-end gap-1 mb-4">
-                {plan.monthly === 0 ? (
-                  <span className="text-3xl font-bold text-slate-800">Free</span>
-                ) : (
-                  <>
-                    <span className="text-3xl font-bold text-slate-800">
-                      ${annual ? Math.round(plan.annual / 12) : plan.monthly}
-                    </span>
-                    <span className="text-slate-400 text-sm mb-1">/mo</span>
-                  </>
-                )}
-              </div>
-              {annual && plan.annual > 0 && (
-                <p className="text-xs text-slate-400 -mt-3 mb-4">${plan.annual}/yr billed annually</p>
-              )}
+              Get started free
+            </Button>
+          </div>
 
-              <ul className="space-y-2 flex-1 mb-6">
-                {plan.highlights.map((h) => (
-                  <li key={h} className="flex items-start gap-2 text-sm text-slate-600">
-                    <span className="text-[#C9A84C] mt-0.5">✓</span>
-                    {h}
-                  </li>
-                ))}
-              </ul>
-
-              <Button
-                onClick={() => handleCheckout(plan.id)}
-                disabled={checkingOut === plan.id}
-                className={plan.popular
-                  ? 'bg-[#C9A84C] hover:bg-[#b8973b] text-white w-full'
-                  : 'w-full'
-                }
-                variant={plan.popular ? 'default' : 'outline'}
-              >
-                {checkingOut === plan.id
-                  ? <><Loader2 className="w-3.5 h-3.5 mr-2 animate-spin" />Redirecting…</>
-                  : plan.cta
-                }
-              </Button>
-              {plan.trial && (
-                <p className="text-xs text-slate-400 text-center mt-2">No credit card required</p>
+          {/* Pro */}
+          <div className="flex flex-col rounded-2xl p-6 border border-[#C9A84C]/50 shadow-lg bg-white relative overflow-hidden">
+            <div className="flex items-center gap-2 mb-3">
+              <Badge className="bg-[#C9A84C] text-white border-0 text-xs">Most Popular</Badge>
+              {annual && (
+                <Badge className="bg-gradient-to-r from-amber-600 to-[#C9A84C] text-white border-0 text-xs animate-pulse">
+                  Founders&apos; Special
+                </Badge>
               )}
             </div>
-          ))}
+            <h2 className="font-playfair text-xl text-slate-800 mb-1">Pro</h2>
+            <div className="flex items-end gap-1 mb-1">
+              <span className="text-3xl font-bold text-slate-800">
+                ${annual ? annualMonthly : monthlyPrice}
+              </span>
+              <span className="text-slate-400 text-sm mb-1">/mo</span>
+            </div>
+            {annual && (
+              <p className="text-xs text-slate-400 mb-4">${annualTotal}/yr billed annually</p>
+            )}
+            {!annual && <div className="mb-4" />}
+
+            <ul className="space-y-2 flex-1 mb-6">
+              {PRO_HIGHLIGHTS.map((h) => (
+                <li key={h} className="flex items-start gap-2 text-sm text-slate-600">
+                  <Check className="w-4 h-4 text-[#C9A84C] mt-0.5 shrink-0" />
+                  {h}
+                </li>
+              ))}
+            </ul>
+
+            <Button
+              onClick={handleCheckout}
+              disabled={checkingOut}
+              className="bg-[#C9A84C] hover:bg-[#b8973b] text-white w-full"
+            >
+              {checkingOut
+                ? <><Loader2 className="w-3.5 h-3.5 mr-2 animate-spin" />Redirecting...</>
+                : 'Start 7-day free trial'
+              }
+            </Button>
+            <p className="text-xs text-slate-400 text-center mt-2">No credit card required</p>
+          </div>
         </div>
 
         {/* Promo code */}

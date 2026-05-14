@@ -7,7 +7,7 @@ create table if not exists public.promo_codes (
   code             text not null unique,
   description      text not null default '',
   discount_percent int not null default 100,        -- 100 = fully free
-  plan_granted     text not null default 'studio',  -- which plan the code unlocks
+  plan_granted     text not null default 'pro',      -- which plan the code unlocks
   max_uses         int,                             -- null = unlimited
   used_count       int not null default 0,
   active           boolean not null default true,
@@ -38,5 +38,5 @@ create policy "Users can read their own redemptions"
 
 -- ─── Seed: team promo code "SUNDIAL" ───────────────────────────────────────
 insert into public.promo_codes (code, description, discount_percent, plan_granted, max_uses, active)
-values ('SUNDIAL', 'Sundial team — free Studio access', 100, 'studio', null, true)
+values ('SUNDIAL', 'Sundial team — free Pro access', 100, 'pro', null, true)
 on conflict (code) do nothing;

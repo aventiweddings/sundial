@@ -8,9 +8,7 @@ import { Check, ExternalLink } from 'lucide-react';
 
 const PLAN_NAMES: Record<string, string> = {
   free: 'Free',
-  solo: 'Solo',
-  studio: 'Studio',
-  agency: 'Agency',
+  pro: 'Pro',
 };
 
 export default async function BillingPage() {
@@ -22,11 +20,10 @@ export default async function BillingPage() {
   const limits = PLAN_LIMITS[plan];
 
   const perks = [
-    `${limits.timelinesPerMonth === Infinity ? 'Unlimited' : limits.timelinesPerMonth} timelines/month`,
+    `${limits.timelinesPerMonth === Infinity ? 'Unlimited' : limits.timelinesPerMonth} timeline${limits.timelinesPerMonth === 1 ? '' : 's'}/month`,
     `${limits.auditsPerMonth === Infinity ? 'Unlimited' : limits.auditsPerMonth} audit${limits.auditsPerMonth === 1 ? '' : 's'}/month`,
-    limits.canExport ? 'PDF & DOCX export' : null,
-    limits.canCustomBrand ? 'Custom branding' : null,
-    `${limits.teamSeats} team seat${limits.teamSeats > 1 ? 's' : ''}`,
+    limits.canExport ? 'All exports (Word, PDF)' : null,
+    limits.canExport ? '3 layout styles' : null,
     `${limits.savedTimelines === Infinity ? 'Unlimited' : limits.savedTimelines} saved timelines`,
   ].filter(Boolean) as string[];
 
@@ -41,7 +38,7 @@ export default async function BillingPage() {
           <div className="flex items-start justify-between mb-5">
             <div>
               <p className="text-sm text-slate-500 mb-1">Current plan</p>
-              <p className="font-playfair text-2xl font-bold text-slate-900">{PLAN_NAMES[plan]}</p>
+              <p className="font-playfair text-2xl font-bold text-slate-900">{PLAN_NAMES[plan] || plan}</p>
             </div>
             <span className={`px-3 py-1 rounded-full text-sm font-medium ${
               plan === 'free' ? 'bg-slate-100 text-slate-600' : 'bg-[#C9A84C]/10 text-[#C9A84C]'
@@ -70,7 +67,7 @@ export default async function BillingPage() {
             ) : (
               <Link href="/pricing">
                 <Button className="bg-[#C9A84C] hover:bg-[#b8973b] text-white">
-                  Upgrade Plan
+                  Upgrade to Pro
                 </Button>
               </Link>
             )}
@@ -79,9 +76,9 @@ export default async function BillingPage() {
 
         {plan === 'free' && (
           <p className="text-sm text-slate-500 text-center">
-            Need more timelines, exports, or team seats?{' '}
+            Need unlimited timelines and exports?{' '}
             <Link href="/pricing" className="text-[#C9A84C] hover:underline font-medium">
-              View all plans →
+              Upgrade to Pro →
             </Link>
           </p>
         )}
