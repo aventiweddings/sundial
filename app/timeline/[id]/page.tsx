@@ -66,9 +66,12 @@ export default function TimelinePage() {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const [exportError, setExportError] = useState<string | null>(null);
+
   const handleExport = async () => {
     if (!timeline || exporting) return;
     setExporting(true);
+    setExportError(null);
     try {
       const res = await fetch('/api/export', {
         method: 'POST',
@@ -76,7 +79,12 @@ export default function TimelinePage() {
         body: JSON.stringify({ timelineId: id, format: 'docx' }),
       });
       if (res.status === 403) {
-        router.push('/pricing');
+        const data = await res.json();
+        setExportError(`Export requires a paid plan (current: ${data.plan || 'free'}). Upgrade or redeem a promo code on the pricing page.`);
+        return;
+      }
+      if (!res.ok) {
+        setExportError('Export failed. Please try again.');
         return;
       }
       const blob = await res.blob();
@@ -118,6 +126,15 @@ export default function TimelinePage() {
     <div className="min-h-screen bg-[#FAF7F2]">
       {/* Top bar */}
       <div className="sticky top-0 z-30 bg-white/90 backdrop-blur border-b border-slate-200 print:hidden">
+        {exportError && (
+          <div className="bg-amber-50 border-b border-amber-200 px-4 py-2.5 text-sm text-amber-800 flex items-center justify-between">
+            <span>{exportError}</span>
+            <div className="flex items-center gap-2 ml-4 shrink-0">
+              <Link href="/pricing" className="underline font-medium hover:text-amber-900">Go to pricing</Link>
+              <button onClick={() => setExportError(null)} className="text-amber-400 hover:text-amber-600 ml-2">✕</button>
+            </div>
+          </div>
+        )}
         <div className="max-w-5xl mx-auto px-4 py-3 flex items-center gap-3">
           <Link href="/dashboard" className="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 transition-colors">
             <ArrowLeft className="w-4 h-4" />
