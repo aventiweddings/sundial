@@ -1,11 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { useRouter } from 'next/navigation';
+import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import Nav from '@/components/layout/Nav';
 import Footer from '@/components/layout/Footer';
 import { Loader2 } from 'lucide-react';
 
@@ -69,7 +70,15 @@ export default function PricingPage() {
   const [promoCode, setPromoCode] = useState('');
   const [promoStatus, setPromoStatus] = useState<{ valid?: boolean; message?: string; plan?: string } | null>(null);
   const [promoLoading, setPromoLoading] = useState(false);
+  const [user, setUser] = useState<{ email?: string } | null>(null);
   const router = useRouter();
+
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data }) => {
+      if (data.user) setUser({ email: data.user.email ?? undefined });
+    });
+  }, []);
 
   const handlePromoValidate = async () => {
     if (!promoCode.trim()) return;
@@ -108,8 +117,8 @@ export default function PricingPage() {
         return;
       }
       if (data.success) {
-        setPromoStatus({ valid: true, message: data.message, plan: data.plan });
-        setTimeout(() => router.push('/dashboard'), 1500);
+        setPromoStatus({ valid: true, message: `${data.message} Redirecting to dashboard...`, plan: data.plan });
+        setTimeout(() => router.push('/dashboard'), 800);
       } else {
         setPromoStatus({ valid: false, message: data.error });
       }
@@ -139,23 +148,7 @@ export default function PricingPage() {
 
   return (
     <div className="min-h-screen bg-[#FAF7F2] flex flex-col">
-      {/* Nav */}
-      <header className="border-b border-[#C9A84C]/15 bg-[#FAF7F2]/90 backdrop-blur-md">
-        <div className="max-w-6xl mx-auto px-6 py-3 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2.5">
-            <div className="w-8 h-8 relative">
-              <Image src="/Logo.png" alt="Sundial" fill className="object-contain" />
-            </div>
-            <span className="font-playfair text-xl text-slate-800">Sundial Timelines</span>
-          </Link>
-          <div className="flex items-center gap-1">
-            <Link href="/sign-in" className="px-3 py-1.5 text-sm text-slate-600 hover:text-slate-900 rounded-lg hover:bg-slate-100 transition-colors">Sign in</Link>
-            <Button asChild size="sm" className="bg-[#C9A84C] hover:bg-[#b8973b] text-white ml-1">
-              <Link href="/sign-up">Start free</Link>
-            </Button>
-          </div>
-        </div>
-      </header>
+      <Nav user={user} />
 
       <main className="flex-1 max-w-6xl mx-auto px-6 py-16 w-full">
         <div className="text-center mb-12">
