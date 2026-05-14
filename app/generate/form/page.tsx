@@ -239,13 +239,51 @@ function FormContent() {
   };
 
   if (generating) {
+    const steps = [
+      { label: 'Looking up sunset time…', key: 'Looking up sunset time…' },
+      { label: 'Calculating drive times…', key: 'Calculating drive times…' },
+      { label: 'Building your timeline…', key: 'Building your timeline…' },
+    ];
+    const currentIdx = steps.findIndex(s => s.key === generationStep);
+    const progress = currentIdx < 0 ? 5 : Math.min(95, ((currentIdx + 1) / steps.length) * 85 + 5);
+
     return (
-      <div className="min-h-screen bg-[#FAF7F2] flex flex-col items-center justify-center gap-6 px-6">
-        <div className="w-16 h-16 rounded-full border-4 border-[#C9A84C]/20 border-t-[#C9A84C] animate-spin" />
-        <div className="text-center">
-          <p className="font-playfair text-xl text-slate-800 mb-2">Building your timeline</p>
-          <p className="text-slate-500 text-sm">{generationStep}</p>
+      <div className="min-h-screen bg-[#FAF7F2] flex flex-col items-center justify-center gap-8 px-6">
+        <div className="w-full max-w-sm">
+          {/* Progress bar */}
+          <div className="w-full bg-slate-200/60 rounded-full h-2.5 mb-6 overflow-hidden">
+            <div
+              className="bg-[#C9A84C] h-2.5 rounded-full transition-all duration-1000 ease-out"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+
+          {/* Steps */}
+          <div className="space-y-3">
+            {steps.map((step, i) => {
+              const isActive = step.key === generationStep;
+              const isDone = currentIdx > i;
+              return (
+                <div key={step.key} className="flex items-center gap-3">
+                  {isDone ? (
+                    <div className="w-5 h-5 rounded-full bg-[#C9A84C] flex items-center justify-center shrink-0">
+                      <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                    </div>
+                  ) : isActive ? (
+                    <Loader2 className="w-5 h-5 text-[#C9A84C] animate-spin shrink-0" />
+                  ) : (
+                    <div className="w-5 h-5 rounded-full border-2 border-slate-200 shrink-0" />
+                  )}
+                  <span className={`text-sm ${isActive ? 'text-slate-800 font-medium' : isDone ? 'text-slate-500' : 'text-slate-400'}`}>
+                    {step.label}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
         </div>
+
+        <p className="text-xs text-slate-400 mt-2">This usually takes 15–30 seconds</p>
       </div>
     );
   }
