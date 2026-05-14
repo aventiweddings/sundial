@@ -147,6 +147,21 @@ FORMATTING RULES:
 - No tables
 - Golden Hour: "7:10 PM (Sunset 7:45 PM)"`;
 
+// Couple-facing version — no vendor-specific notes, tips framed from Sundial Timelines
+export const SYSTEM_PROMPT_COUPLE = SYSTEM_PROMPT
+  .replace(
+    `- Photographer's Notes: For each time block, include a brief italicized note such as "We typically only need about X for this — here's why." Keep these factual and direct. No words like "magical," "sacred," "stunning," "breathtaking," or similar. Just state what the time is for and why that amount works.`,
+    `- Sundial Tips: Instead of photographer's notes, include brief italicized tips from Sundial Timelines framed for the couple. These should be helpful, friendly suggestions — not vendor-speak. Example: "We recommend setting aside 15–30 minutes here so your photographer can capture the best natural light." or "This buffer gives your wedding party time to regroup without feeling rushed." Write as "we recommend" or "we encourage" from Sundial Timelines' perspective. Keep them short and practical.`
+  )
+  .replace(
+    `- Photographer's Note format: "Golden hour is the best natural light of the day for portraits. We want 30–45 min here, but can work with 15 if needed. Aiming for [X:XX PM] based on a [X:XX PM] sunset."`,
+    `- Sundial Tip format for Golden Hour: "We encourage you to prioritize 30–45 minutes for golden hour portraits with your photographer — it's the best natural light of the day. Aiming for [X:XX PM] based on a [X:XX PM] sunset."`
+  )
+  .replace(
+    `Photographer's Notes in italics`,
+    `Sundial Tips in italics (framed as "Sundial Tip:" instead of "Photographer's Note:")`
+  );
+
 export function buildUserMessage(data: WeddingData, enriched: EnrichedData): string {
   const lines: string[] = [
     `Generate a complete wedding day timeline for the following wedding:`,

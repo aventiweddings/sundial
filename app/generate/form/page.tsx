@@ -68,6 +68,7 @@ function FormContent() {
   const [showPaste, setShowPaste] = useState(method === 'paste');
   const [showUpload, setShowUpload] = useState(method === 'upload');
   const [extractBanner, setExtractBanner] = useState(false);
+  const [includeVendorNotes, setIncludeVendorNotes] = useState(true);
 
   const [p1Label, p2Label] = PERSON_LABELS[coupleType];
 
@@ -196,7 +197,7 @@ function FormContent() {
       const genRes = await fetch('/api/generate-timeline', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ weddingData, enrichedData: finalEnriched }),
+        body: JSON.stringify({ weddingData, enrichedData: finalEnriched, includeVendorNotes }),
       });
 
       if (!genRes.ok) {
@@ -508,6 +509,26 @@ function FormContent() {
               value={form.additionalNotes || ''} onChange={e => set('additionalNotes', e.target.value)} />
           </FieldRow>
         </SectionCard>
+
+        {/* ── Timeline Options ── */}
+        <div className="bg-white rounded-2xl border border-[#C9A84C]/15 p-6">
+          <label className="flex items-start gap-3 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={includeVendorNotes}
+              onChange={e => setIncludeVendorNotes(e.target.checked)}
+              className="mt-0.5 w-4 h-4 rounded border-slate-300 text-[#C9A84C] focus:ring-[#C9A84C]/30"
+            />
+            <div>
+              <span className="text-sm font-medium text-slate-800">Include vendor notes</span>
+              <p className="text-xs text-slate-500 mt-0.5">
+                {includeVendorNotes
+                  ? 'Photographer\'s notes and vendor-specific timing tips will be included throughout the timeline.'
+                  : 'Notes will be written as general tips from Sundial Timelines, framed for the couple — no vendor-specific language.'}
+              </p>
+            </div>
+          </label>
+        </div>
 
         <Button type="submit" disabled={generating} className="w-full h-14 text-base font-semibold bg-[#C9A84C] hover:bg-[#b8973b] text-white rounded-xl shadow-md">
           {generating ? (

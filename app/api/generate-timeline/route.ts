@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { checkUsage, incrementUsage } from '@/lib/plans';
-import { anthropic, SYSTEM_PROMPT, buildUserMessage } from '@/lib/claude';
+import { anthropic, SYSTEM_PROMPT, SYSTEM_PROMPT_COUPLE, buildUserMessage } from '@/lib/claude';
 import { WeddingData, EnrichedData } from '@/lib/types';
 
 export async function POST(req: NextRequest) {
@@ -19,9 +19,14 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const { weddingData, enrichedData }: { weddingData: WeddingData; enrichedData: EnrichedData } = await req.json();
+  const { weddingData, enrichedData, includeVendorNotes = true }: {
+    weddingData: WeddingData;
+    enrichedData: EnrichedData;
+    includeVendorNotes?: boolean;
+  } = await req.json();
 
   const userMessage = buildUserMessage(weddingData, enrichedData || {});
+  const systemPrompt = includeVendorNotes ? SYSTEM_PROMPT : SYSTEM_PROMPT_COUPLE;
 
   const stream = new ReadableStream({
     async start(controller) {
@@ -29,7 +34,7 @@ export async function POST(req: NextRequest) {
         const response = await anthropic.messages.create({
           model: 'claude-sonnet-4-5',
           max_tokens: 8192,
-          system: SYSTEM_PROMPT,
+          system: systemPrompt,
           messages: [{ role: 'user', content: userMessage }],
           stream: true,
         });
