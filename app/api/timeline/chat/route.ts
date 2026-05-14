@@ -28,6 +28,9 @@ export async function POST(req: NextRequest) {
         let fullResponse = '';
         let updatedTimeline = currentContent;
 
+        // Send a thinking indicator immediately
+        send({ type: 'thinking' });
+
         const response = await anthropic.messages.stream({
           model: 'claude-sonnet-4-5',
           max_tokens: 4096,
@@ -35,10 +38,17 @@ export async function POST(req: NextRequest) {
           messages,
         });
 
+        // Collect response server-side — don't stream raw text to client
+        // Send periodic heartbeats so the connection stays alive
+        let lastHeartbeat = Date.now();
         for await (const event of response) {
           if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') {
             fullResponse += event.delta.text;
-            send({ type: 'text_delta', text: event.delta.text });
+            // Heartbeat every 2 seconds to keep connection alive
+            if (Date.now() - lastHeartbeat > 2000) {
+              send({ type: 'thinking' });
+              lastHeartbeat = Date.now();
+            }
           }
         }
 
@@ -47,12 +57,12 @@ export async function POST(req: NextRequest) {
         if (timelineMatch) {
           updatedTimeline = timelineMatch[1].trim();
           const responseText = fullResponse.replace(/```timeline[\s\S]*?```/, '').trim();
-          send({ type: 'timeline_update', timeline: updatedTimeline, response: responseText || fullResponse });
+          send({ type: 'timeline_update', timeline: updatedTimeline, response: responseText || 'I\'ve updated your timeline.' });
         } else {
           // The whole response might be the updated timeline if it looks like one
           const looksLikeTimeline = fullResponse.includes('**') && (fullResponse.includes('AM') || fullResponse.includes('PM'));
           if (looksLikeTimeline) {
-            send({ type: 'timeline_update', timeline: fullResponse, response: 'I\'ve updated your timeline.' });
+            send({ type: 'timeline_update', timeline: fullResponse, response: 'I\'ve updated your timeline with those changes.' });
           } else {
             send({ type: 'timeline_update', timeline: updatedTimeline, response: fullResponse });
           }

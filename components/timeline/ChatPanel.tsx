@@ -26,12 +26,11 @@ export default function ChatPanel({ timelineId, content, chatHistory, onTimeline
   const [messages, setMessages] = useState<ChatMessage[]>(chatHistory);
   const [input, setInput] = useState('');
   const [streaming, setStreaming] = useState(false);
-  const [streamBuffer, setStreamBuffer] = useState('');
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (open) bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, streamBuffer, open]);
+  }, [messages, streaming, open]);
 
   const sendMessage = async (text: string) => {
     if (!text.trim() || streaming) return;
@@ -40,7 +39,6 @@ export default function ChatPanel({ timelineId, content, chatHistory, onTimeline
     setMessages(updatedHistory);
     setInput('');
     setStreaming(true);
-    setStreamBuffer('');
 
     try {
       const res = await fetch('/api/timeline/chat', {
@@ -58,7 +56,6 @@ export default function ChatPanel({ timelineId, content, chatHistory, onTimeline
 
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
-      let full = '';
 
       while (true) {
         const { done, value } = await reader.read();
@@ -71,14 +68,10 @@ export default function ChatPanel({ timelineId, content, chatHistory, onTimeline
             if (payload === '[DONE]') continue;
             try {
               const parsed = JSON.parse(payload);
-              if (parsed.type === 'text_delta') {
-                full += parsed.text;
-                setStreamBuffer(full);
-              } else if (parsed.type === 'timeline_update') {
+              if (parsed.type === 'timeline_update') {
                 const assistantMsg: ChatMessage = { role: 'assistant', content: parsed.response };
                 const finalHistory = [...updatedHistory, assistantMsg];
                 setMessages(finalHistory);
-                setStreamBuffer('');
                 onTimelineUpdate(parsed.timeline, finalHistory);
 
                 // persist to API
@@ -88,23 +81,15 @@ export default function ChatPanel({ timelineId, content, chatHistory, onTimeline
                   body: JSON.stringify({ chat_history: finalHistory, content: parsed.timeline }),
                 });
               }
+              // 'thinking' events just keep the connection alive — no UI action needed
             } catch { /* non-JSON line */ }
           }
         }
-      }
-
-      // fallback if no timeline_update event was sent
-      if (full && streamBuffer) {
-        const assistantMsg: ChatMessage = { role: 'assistant', content: full };
-        const finalHistory = [...updatedHistory, assistantMsg];
-        setMessages(finalHistory);
-        setStreamBuffer('');
       }
     } catch {
       setMessages(prev => [...prev, { role: 'assistant', content: 'Something went wrong. Please try again.' }]);
     } finally {
       setStreaming(false);
-      setStreamBuffer('');
     }
   };
 
@@ -181,19 +166,16 @@ export default function ChatPanel({ timelineId, content, chatHistory, onTimeline
               </div>
             ))}
 
-            {/* Streaming bubble */}
-            {streamBuffer && (
-              <div className="flex justify-start">
-                <div className="max-w-[85%] rounded-2xl rounded-bl-sm px-4 py-2.5 text-sm leading-relaxed bg-slate-100 text-slate-800">
-                  {streamBuffer}
+            {/* Thinking indicator */}
+            {streaming && (
+              <div className="flex justify-start gap-2">
+                <div className="w-6 h-6 rounded-full bg-gradient-to-br from-amber-100 to-[#C9A84C]/20 flex items-center justify-center text-xs shrink-0 mt-1">
+                  ☀️
                 </div>
-              </div>
-            )}
-
-            {streaming && !streamBuffer && (
-              <div className="flex justify-start">
-                <div className="bg-slate-100 rounded-2xl rounded-bl-sm px-4 py-3">
-                  <Loader2 className="w-4 h-4 animate-spin text-[#C9A84C]" />
+                <div className="bg-slate-100 rounded-2xl rounded-bl-sm px-4 py-3 flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-[#C9A84C]/60 animate-bounce" style={{ animationDelay: '0ms' }} />
+                  <span className="w-2 h-2 rounded-full bg-[#C9A84C]/60 animate-bounce" style={{ animationDelay: '150ms' }} />
+                  <span className="w-2 h-2 rounded-full bg-[#C9A84C]/60 animate-bounce" style={{ animationDelay: '300ms' }} />
                 </div>
               </div>
             )}
