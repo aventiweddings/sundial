@@ -7,7 +7,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import Nav from '@/components/layout/Nav';
 import Footer from '@/components/layout/Footer';
-import { Loader2, Check } from 'lucide-react';
+import Link from 'next/link';
+import { Loader2, Check, PartyPopper } from 'lucide-react';
 
 const FREE_HIGHLIGHTS = [
   '1 timeline/month',
@@ -38,7 +39,9 @@ export default function PricingPage() {
   const [promoCode, setPromoCode] = useState('');
   const [promoStatus, setPromoStatus] = useState<{ valid?: boolean; message?: string; plan?: string } | null>(null);
   const [promoLoading, setPromoLoading] = useState(false);
+  const [redeemed, setRedeemed] = useState<string | null>(null);
   const [user, setUser] = useState<{ email?: string } | null>(null);
+  const [userPlan, setUserPlan] = useState<string | null>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -85,8 +88,9 @@ export default function PricingPage() {
         return;
       }
       if (data.success) {
-        setPromoStatus({ valid: true, message: `${data.message} Redirecting to dashboard...`, plan: data.plan });
-        setTimeout(() => router.push('/dashboard'), 800);
+        setRedeemed(data.plan || 'pro');
+        setUserPlan(data.plan || 'pro');
+        setPromoStatus({ valid: true, message: data.message, plan: data.plan });
       } else {
         setPromoStatus({ valid: false, message: data.error });
       }
@@ -119,7 +123,7 @@ export default function PricingPage() {
 
   return (
     <div className="min-h-screen bg-[#FAF7F2] flex flex-col">
-      <Nav user={user} />
+      <Nav user={user} plan={userPlan || undefined} />
 
       <main className="flex-1 max-w-4xl mx-auto px-6 py-16 w-full">
         <div className="text-center mb-12">
@@ -203,61 +207,95 @@ export default function PricingPage() {
               ))}
             </ul>
 
-            <Button
-              onClick={handleCheckout}
-              disabled={checkingOut}
-              className="bg-[#C9A84C] hover:bg-[#b8973b] text-white w-full"
-            >
-              {checkingOut
-                ? <><Loader2 className="w-3.5 h-3.5 mr-2 animate-spin" />Redirecting...</>
-                : 'Start 7-day free trial'
-              }
-            </Button>
-            <p className="text-xs text-slate-400 text-center mt-2">No credit card required</p>
+            {redeemed ? (
+              <>
+                <Button
+                  className="bg-green-600 hover:bg-green-700 text-white w-full cursor-default"
+                  disabled
+                >
+                  <Check className="w-4 h-4 mr-2" />
+                  Current Plan
+                </Button>
+                <p className="text-xs text-green-600 text-center mt-2 font-medium">Activated via promo code</p>
+              </>
+            ) : (
+              <>
+                <Button
+                  onClick={handleCheckout}
+                  disabled={checkingOut}
+                  className="bg-[#C9A84C] hover:bg-[#b8973b] text-white w-full"
+                >
+                  {checkingOut
+                    ? <><Loader2 className="w-3.5 h-3.5 mr-2 animate-spin" />Redirecting...</>
+                    : 'Start 7-day free trial'
+                  }
+                </Button>
+                <p className="text-xs text-slate-400 text-center mt-2">No credit card required</p>
+              </>
+            )}
           </div>
         </div>
 
         {/* Promo code */}
         <div className="max-w-md mx-auto mb-20 text-center">
-          <div className="flex items-center gap-3 mb-6 justify-center">
-            <div className="flex-1 h-px bg-[#C9A84C]/20 max-w-16" />
-            <span className="text-xs font-semibold tracking-widest text-[#C9A84C] uppercase">Have a promo code?</span>
-            <div className="flex-1 h-px bg-[#C9A84C]/20 max-w-16" />
-          </div>
+          {redeemed ? (
+            <div className="bg-green-50 border border-green-200 rounded-2xl p-6">
+              <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-3">
+                <PartyPopper className="w-6 h-6 text-green-600" />
+              </div>
+              <h3 className="font-playfair text-xl font-bold text-slate-900 mb-1">You&apos;re on Pro!</h3>
+              <p className="text-sm text-slate-500 mb-4">
+                Code <span className="font-mono font-semibold text-slate-700">{promoCode.toUpperCase()}</span> applied successfully.
+              </p>
+              <Link href="/dashboard">
+                <Button className="bg-[#C9A84C] hover:bg-[#b8973b] text-white">
+                  Go to Dashboard
+                </Button>
+              </Link>
+            </div>
+          ) : (
+            <>
+              <div className="flex items-center gap-3 mb-6 justify-center">
+                <div className="flex-1 h-px bg-[#C9A84C]/20 max-w-16" />
+                <span className="text-xs font-semibold tracking-widest text-[#C9A84C] uppercase">Have a promo code?</span>
+                <div className="flex-1 h-px bg-[#C9A84C]/20 max-w-16" />
+              </div>
 
-          <div className="flex gap-2">
-            <input
-              type="text"
-              placeholder="Enter code"
-              value={promoCode}
-              onChange={(e) => { setPromoCode(e.target.value); setPromoStatus(null); }}
-              onKeyDown={(e) => e.key === 'Enter' && handlePromoValidate()}
-              className="flex-1 px-4 py-2.5 rounded-lg border border-slate-200 bg-white text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#C9A84C]/30 focus:border-[#C9A84C]/50 uppercase tracking-wider"
-            />
-            {promoStatus?.valid ? (
-              <Button
-                onClick={handlePromoRedeem}
-                disabled={promoLoading}
-                className="bg-[#C9A84C] hover:bg-[#b8973b] text-white px-6"
-              >
-                {promoLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Redeem'}
-              </Button>
-            ) : (
-              <Button
-                onClick={handlePromoValidate}
-                disabled={promoLoading || !promoCode.trim()}
-                variant="outline"
-                className="px-6"
-              >
-                {promoLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Apply'}
-              </Button>
-            )}
-          </div>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  placeholder="Enter code"
+                  value={promoCode}
+                  onChange={(e) => { setPromoCode(e.target.value); setPromoStatus(null); }}
+                  onKeyDown={(e) => e.key === 'Enter' && handlePromoValidate()}
+                  className="flex-1 px-4 py-2.5 rounded-lg border border-slate-200 bg-white text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#C9A84C]/30 focus:border-[#C9A84C]/50 uppercase tracking-wider"
+                />
+                {promoStatus?.valid ? (
+                  <Button
+                    onClick={handlePromoRedeem}
+                    disabled={promoLoading}
+                    className="bg-[#C9A84C] hover:bg-[#b8973b] text-white px-6"
+                  >
+                    {promoLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Redeem'}
+                  </Button>
+                ) : (
+                  <Button
+                    onClick={handlePromoValidate}
+                    disabled={promoLoading || !promoCode.trim()}
+                    variant="outline"
+                    className="px-6"
+                  >
+                    {promoLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Apply'}
+                  </Button>
+                )}
+              </div>
 
-          {promoStatus && (
-            <p className={`text-sm mt-3 ${promoStatus.valid ? 'text-green-600' : 'text-red-500'}`}>
-              {promoStatus.valid ? '✓' : '✕'} {promoStatus.message}
-            </p>
+              {promoStatus && (
+                <p className={`text-sm mt-3 ${promoStatus.valid ? 'text-green-600' : 'text-red-500'}`}>
+                  {promoStatus.valid ? '✓' : '✕'} {promoStatus.message}
+                </p>
+              )}
+            </>
           )}
         </div>
 
