@@ -12,6 +12,17 @@ export const PLAN_LIMITS: Record<Plan, {
   pro:  { timelinesPerMonth: Infinity, auditsPerMonth: Infinity, canExport: true,  savedTimelines: Infinity },
 };
 
+const VALID_PLANS = new Set<string>(Object.keys(PLAN_LIMITS));
+
+/** Map legacy plan names (solo, studio, agency) to the new 2-tier model. */
+function normalizePlan(raw: string | null | undefined): Plan {
+  if (!raw) return 'free';
+  if (VALID_PLANS.has(raw)) return raw as Plan;
+  // Any paid legacy plan → pro
+  if (['solo', 'studio', 'agency'].includes(raw)) return 'pro';
+  return 'free';
+}
+
 export async function getUserPlan(userId: string): Promise<Plan> {
   const supabase = await createClient();
   const { data } = await supabase
@@ -19,7 +30,7 @@ export async function getUserPlan(userId: string): Promise<Plan> {
     .select('plan')
     .eq('user_id', userId)
     .single();
-  return (data?.plan as Plan) || 'free';
+  return normalizePlan(data?.plan);
 }
 
 export async function checkUsage(
@@ -34,7 +45,7 @@ export async function checkUsage(
     .eq('user_id', userId)
     .single();
 
-  const plan: Plan = (sub?.plan as Plan) || 'free';
+  const plan: Plan = normalizePlan(sub?.plan);
   const limits = PLAN_LIMITS[plan];
 
   const periodStart = new Date();
