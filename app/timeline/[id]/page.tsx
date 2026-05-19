@@ -25,7 +25,7 @@ type ExportLayout = 'simple' | 'elegant' | 'grid';
 const LAYOUT_OPTIONS: { id: ExportLayout; name: string; desc: string }[] = [
   { id: 'simple', name: 'Simple', desc: 'Clean and minimal' },
   { id: 'elegant', name: 'Elegant', desc: 'Serif, ornamental' },
-  { id: 'grid', name: 'Grid', desc: 'Structured time blocks' },
+  { id: 'grid', name: 'Grid', desc: 'Sectioned phase cards' },
 ];
 
 export default function TimelinePage() {
