@@ -21,6 +21,7 @@ import {
   Share2,
   Link2,
 } from 'lucide-react';
+import Nav from '@/components/layout/Nav';
 
 type ExportLayout = 'simple' | 'elegant' | 'grid';
 
@@ -186,6 +187,8 @@ export default function TimelinePage() {
 
   return (
     <div className="min-h-screen bg-[#FAF7F2]">
+      <Nav />
+
       {/* Paywall modal */}
       {showPaywall && (
         <div className="fixed inset-0 z-[60] bg-black/40 flex items-center justify-center p-4">
@@ -281,7 +284,7 @@ export default function TimelinePage() {
       )}
 
       {/* Top bar */}
-      <div className="sticky top-0 z-30 bg-white/90 backdrop-blur border-b border-slate-200 print:hidden">
+      <div className="sticky top-14 z-30 bg-white/90 backdrop-blur border-b border-slate-200 print:hidden">
         {exportError && (
           <div className="bg-amber-50 border-b border-amber-200 px-4 py-2.5 text-sm text-amber-800 flex items-center justify-between">
             <span>{exportError}</span>

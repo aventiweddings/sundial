@@ -2,11 +2,11 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import Nav from '@/components/layout/Nav';
 
 export default function SignUpPage() {
   const [email, setEmail] = useState('');
@@ -37,7 +37,9 @@ export default function SignUpPage() {
 
   if (done) {
     return (
-      <div className="min-h-screen bg-[#FAF7F2] flex flex-col items-center justify-center px-4">
+      <div className="min-h-screen bg-[#FAF7F2] flex flex-col">
+        <Nav />
+        <div className="flex-1 flex flex-col items-center justify-center px-4">
         <div className="w-full max-w-sm text-center">
           <div className="w-16 h-16 rounded-full bg-[#C9A84C]/10 flex items-center justify-center mx-auto mb-6">
             <span className="text-2xl">✉️</span>
@@ -52,19 +54,16 @@ export default function SignUpPage() {
             <Link href="/sign-in" className="text-[#C9A84C] hover:underline">Sign in</Link>
           </p>
         </div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#FAF7F2] flex flex-col items-center justify-center px-4">
+    <div className="min-h-screen bg-[#FAF7F2] flex flex-col">
+      <Nav />
+      <div className="flex-1 flex flex-col items-center justify-center px-4">
       <div className="w-full max-w-sm">
-        <div className="flex justify-center mb-8">
-          <Link href="/">
-            <Image src="/Logo.png" alt="Sundial" width={48} height={48} className="object-contain" />
-          </Link>
-        </div>
-
         <h1 className="font-playfair text-3xl text-center text-slate-800 mb-1">Create your account</h1>
         <p className="text-center text-slate-500 text-sm mb-8">Free to start — no credit card required</p>
 
@@ -114,6 +113,7 @@ export default function SignUpPage() {
             Sign in
           </Link>
         </p>
+      </div>
       </div>
     </div>
   );

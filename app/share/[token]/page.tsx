@@ -6,6 +6,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import DocumentView from '@/components/timeline/DocumentView';
 import { Loader2 } from 'lucide-react';
+import Nav from '@/components/layout/Nav';
 
 interface SharedTimeline {
   couple_name: string;
@@ -72,23 +73,7 @@ export default function SharedTimelinePage() {
 
   return (
     <div className="min-h-screen bg-[#FAF7F2] flex flex-col">
-      {/* Minimal branded header */}
-      <header className="border-b border-[#C9A84C]/15 bg-white/80 backdrop-blur sticky top-0 z-30 print:hidden">
-        <div className="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2">
-            <div className="w-6 h-6 relative">
-              <Image src="/Logo.png" alt="Sundial" fill className="object-contain" />
-            </div>
-            <span className="font-playfair text-sm text-slate-600">Sundial Timelines</span>
-          </Link>
-          <Link
-            href="/sign-up"
-            className="text-xs text-[#C9A84C] hover:text-[#b8973b] font-medium"
-          >
-            Create your own →
-          </Link>
-        </div>
-      </header>
+      <Nav />
 
       {/* Timeline content */}
       <main className="flex-1 max-w-3xl mx-auto px-4 py-10 w-full print:py-4 print:px-0">

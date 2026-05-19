@@ -3,11 +3,11 @@
 import { useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import Image from 'next/image';
 import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import Nav from '@/components/layout/Nav';
 
 function SignInForm() {
   const router = useRouter();
@@ -76,14 +76,10 @@ function SignInForm() {
 
 export default function SignInPage() {
   return (
-    <div className="min-h-screen bg-[#FAF7F2] flex flex-col items-center justify-center px-4">
+    <div className="min-h-screen bg-[#FAF7F2] flex flex-col">
+      <Nav />
+      <div className="flex-1 flex flex-col items-center justify-center px-4">
       <div className="w-full max-w-sm">
-        <div className="flex justify-center mb-8">
-          <Link href="/">
-            <Image src="/Logo.png" alt="Sundial" width={48} height={48} className="object-contain" />
-          </Link>
-        </div>
-
         <h1 className="font-playfair text-3xl text-center text-slate-800 mb-1">Welcome back</h1>
         <p className="text-center text-slate-500 text-sm mb-8">Sign in to your Sundial account</p>
 
@@ -97,6 +93,7 @@ export default function SignInPage() {
             Sign up free
           </Link>
         </p>
+      </div>
       </div>
     </div>
   );

@@ -12,6 +12,7 @@ import { Plus, Trash2, Loader2 } from 'lucide-react';
 import PasteInput from '@/components/generate/PasteInput';
 import FileUpload from '@/components/generate/FileUpload';
 import EnrichmentStatus from '@/components/generate/EnrichmentStatus';
+import Nav from '@/components/layout/Nav';
 
 const COUPLE_TYPES: CoupleType[] = ['Bride + Groom', 'Bride + Bride', 'Groom + Groom', 'Partner + Partner'];
 
@@ -543,6 +544,7 @@ function FormContent() {
 export default function GenerateFormPage() {
   return (
     <div className="min-h-screen bg-[#FAF7F2] flex flex-col">
+      <Nav />
       <Suspense>
         <FormContent />
       </Suspense>

@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
+import Nav from '@/components/layout/Nav';
 import Footer from '@/components/layout/Footer';
 import VeilBackground from '@/components/landing/VeilBackground';
 import SundialCursor from '@/components/landing/SundialCursor';
@@ -14,28 +15,7 @@ export default async function HomePage() {
 
   return (
     <div className="min-h-screen bg-[#FAF7F2] flex flex-col">
-      {/* Nav */}
-      <header className="border-b border-[#C9A84C]/15 bg-[#FAF7F2]/90 backdrop-blur-md">
-        <div className="max-w-6xl mx-auto px-6 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 relative">
-              <Image src="/Logo.png" alt="Sundial" fill className="object-contain" />
-            </div>
-            <span className="font-playfair text-xl text-slate-800">Sundial Timelines</span>
-          </div>
-          <nav className="flex items-center gap-1">
-            <Link href="/pricing" className="hidden sm:inline-flex px-3 py-1.5 text-sm text-slate-600 hover:text-slate-900 rounded-lg hover:bg-slate-100 transition-colors">
-              Pricing
-            </Link>
-            <Link href="/sign-in" className="px-3 py-1.5 text-sm text-slate-600 hover:text-slate-900 rounded-lg hover:bg-slate-100 transition-colors">
-              Sign in
-            </Link>
-            <Button asChild size="sm" className="bg-[#C9A84C] hover:bg-[#b8973b] text-white ml-1">
-              <Link href="/sign-up">Start free</Link>
-            </Button>
-          </nav>
-        </div>
-      </header>
+      <Nav />
 
       {/* Hero */}
       <main className="flex-1 flex flex-col items-center justify-center px-6 py-24 text-center relative overflow-hidden">
