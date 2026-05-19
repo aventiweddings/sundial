@@ -18,6 +18,8 @@ import {
   FileDown,
   X,
   Lock,
+  Share2,
+  Link2,
 } from 'lucide-react';
 
 type ExportLayout = 'simple' | 'elegant' | 'grid';
@@ -42,6 +44,11 @@ export default function TimelinePage() {
   const [showExportPicker, setShowExportPicker] = useState(false);
   const [selectedLayout, setSelectedLayout] = useState<ExportLayout>('simple');
   const [showPaywall, setShowPaywall] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [shareUrl, setShareUrl] = useState<string | null>(null);
+  const [shareLoading, setShareLoading] = useState(false);
+  const [shareCopied, setShareCopied] = useState(false);
+  const [shareQrSvg, setShareQrSvg] = useState<string | null>(null);
 
   useEffect(() => {
     fetch(`/api/timelines/${id}`)
@@ -124,6 +131,36 @@ export default function TimelinePage() {
     }
   };
 
+  const handleShare = async () => {
+    setShowShareModal(true);
+    if (shareUrl) return; // already have a link
+    setShareLoading(true);
+    try {
+      const res = await fetch('/api/share', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ timelineId: id }),
+      });
+      const data = await res.json();
+      if (data.shareUrl) {
+        setShareUrl(data.shareUrl);
+        // Generate QR code client-side
+        import('@/lib/qr').then(({ generateQrSvg }) => {
+          setShareQrSvg(generateQrSvg(data.shareUrl, 5, 8));
+        });
+      }
+    } finally {
+      setShareLoading(false);
+    }
+  };
+
+  const handleCopyShareLink = async () => {
+    if (!shareUrl) return;
+    await navigator.clipboard.writeText(shareUrl);
+    setShareCopied(true);
+    setTimeout(() => setShareCopied(false), 2000);
+  };
+
   const handleTimelineUpdate = useCallback((newContent: string, newHistory: ChatMessage[]) => {
     setTimeline(prev => prev ? { ...prev, content: newContent, chat_history: newHistory } : prev);
     setSaved(false);
@@ -178,6 +215,66 @@ export default function TimelinePage() {
               >
                 Maybe later
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Share modal */}
+      {showShareModal && (
+        <div className="fixed inset-0 z-[60] bg-black/40 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl relative">
+            <button
+              onClick={() => setShowShareModal(false)}
+              className="absolute top-4 right-4 p-1 text-slate-400 hover:text-slate-600"
+            >
+              <X className="w-4 h-4" />
+            </button>
+
+            <div className="text-center">
+              <div className="w-12 h-12 rounded-2xl bg-[#C9A84C]/10 flex items-center justify-center mx-auto mb-3">
+                <Share2 className="w-6 h-6 text-[#C9A84C]" />
+              </div>
+              <h3 className="font-playfair text-xl font-bold text-slate-900 mb-1">Share Timeline</h3>
+              <p className="text-sm text-slate-500 mb-5">
+                Anyone with this link can view the timeline.
+              </p>
+
+              {shareLoading ? (
+                <div className="py-8 flex items-center justify-center">
+                  <Loader2 className="w-6 h-6 animate-spin text-[#C9A84C]" />
+                </div>
+              ) : shareUrl ? (
+                <>
+                  {/* QR code */}
+                  {shareQrSvg && (
+                    <div
+                      className="mx-auto mb-5 w-48 h-48 rounded-xl border border-slate-100 p-3 bg-white"
+                      dangerouslySetInnerHTML={{ __html: shareQrSvg }}
+                    />
+                  )}
+
+                  {/* URL + copy */}
+                  <div className="flex items-center gap-2 bg-slate-50 rounded-lg p-2 mb-4">
+                    <Link2 className="w-4 h-4 text-slate-400 shrink-0" />
+                    <p className="text-xs text-slate-600 truncate flex-1 text-left font-mono">
+                      {shareUrl}
+                    </p>
+                    <button
+                      onClick={handleCopyShareLink}
+                      className="shrink-0 text-xs font-medium text-[#C9A84C] hover:text-[#b8973b] px-2 py-1 rounded-md hover:bg-[#C9A84C]/10 transition-colors"
+                    >
+                      {shareCopied ? 'Copied!' : 'Copy'}
+                    </button>
+                  </div>
+
+                  <p className="text-xs text-slate-400">
+                    Scan the QR code or share the link with your vendors, bridal party, or planner.
+                  </p>
+                </>
+              ) : (
+                <p className="text-sm text-red-500">Failed to create share link. Please try again.</p>
+              )}
             </div>
           </div>
         </div>
@@ -268,6 +365,16 @@ export default function TimelinePage() {
             </Button>
 
             <Button
+              variant="outline"
+              size="sm"
+              onClick={handleShare}
+              className="hidden sm:flex items-center gap-1.5 border-slate-200 text-slate-600 hover:text-slate-900"
+            >
+              <Share2 className="w-3.5 h-3.5" />
+              Share
+            </Button>
+
+            <Button
               size="sm"
               onClick={handleSave}
               disabled={saving || saved}
@@ -334,6 +441,14 @@ export default function TimelinePage() {
           >
             <Printer className="w-4 h-4 mr-2" />
             Print
+          </Button>
+          <Button
+            variant="outline"
+            className="flex-1 border-slate-200 text-slate-600"
+            onClick={handleShare}
+          >
+            <Share2 className="w-4 h-4 mr-2" />
+            Share
           </Button>
         </div>
 
