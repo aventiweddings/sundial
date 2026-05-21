@@ -15,7 +15,7 @@ import {
   VerticalAlign,
 } from 'docx';
 
-export type ExportLayout = 'simple' | 'elegant' | 'grid';
+export type ExportLayout = 'simple' | 'elegant' | 'grid' | 'coordinator';
 
 function parseInline(text: string, overrides?: Partial<{ font: string; size: number; color: string }>): TextRun[] {
   const runs: TextRun[] = [];
@@ -453,6 +453,172 @@ function buildGrid(lines: string[], coupleName: string, weddingDate: string): (P
   return children;
 }
 
+// ─── COORDINATOR NOTES LAYOUT ───────────────────────────────────────────────
+// Structured working document for the day-of coordinator.
+function buildCoordinatorLayout(lines: string[], coupleName: string, weddingDate: string): (Paragraph | Table)[] {
+  const children: (Paragraph | Table)[] = [];
+  const noBorder = { style: BorderStyle.NONE, size: 0, color: 'FFFFFF' };
+
+  // Cover block
+  children.push(
+    new Paragraph({
+      children: [new TextRun({ text: 'COORDINATOR WORKING DOCUMENT', bold: true, size: 20, font: 'Arial', color: '64748B', allCaps: true })],
+      alignment: AlignmentType.CENTER,
+      spacing: { after: 80 },
+    }),
+    new Paragraph({
+      children: [new TextRun({ text: coupleName, bold: true, size: 40, font: 'Georgia', color: '1E293B' })],
+      alignment: AlignmentType.CENTER,
+      spacing: { after: 60 },
+    }),
+    new Paragraph({
+      children: [new TextRun({ text: weddingDate, size: 22, color: '64748B', italics: true, font: 'Georgia' })],
+      alignment: AlignmentType.CENTER,
+      spacing: { after: 400 },
+    }),
+  );
+
+  let inTable = false;
+  let tableRows: TableRow[] = [];
+
+  const flushTable = () => {
+    if (tableRows.length > 0) {
+      children.push(new Table({
+        rows: tableRows,
+        width: { size: 100, type: WidthType.PERCENTAGE },
+        borders: {
+          top: { style: BorderStyle.SINGLE, size: 2, color: 'E2E8F0' },
+          bottom: { style: BorderStyle.SINGLE, size: 2, color: 'E2E8F0' },
+          left: { style: BorderStyle.SINGLE, size: 2, color: 'E2E8F0' },
+          right: { style: BorderStyle.SINGLE, size: 2, color: 'E2E8F0' },
+          insideHorizontal: { style: BorderStyle.SINGLE, size: 1, color: 'E2E8F0' },
+          insideVertical: { style: BorderStyle.SINGLE, size: 1, color: 'E2E8F0' },
+        },
+      }));
+      children.push(new Paragraph({ children: [new TextRun({ text: '' })], spacing: { after: 160 } }));
+      tableRows = [];
+    }
+    inTable = false;
+  };
+
+  for (const line of lines) {
+    if (!line.trim()) {
+      if (inTable) flushTable();
+      children.push(new Paragraph({ children: [new TextRun({ text: '' })], spacing: { after: 60 } }));
+      continue;
+    }
+
+    // Major section heading: ## VENDOR ARRIVAL SCHEDULE etc.
+    if (/^## /.test(line)) {
+      if (inTable) flushTable();
+      const title = line.slice(3).trim();
+      children.push(new Paragraph({
+        children: [new TextRun({ text: title.toUpperCase(), bold: true, size: 20, font: 'Arial', color: 'C9A84C', allCaps: true })],
+        spacing: { before: 360, after: 80 },
+        border: { bottom: { style: BorderStyle.SINGLE, size: 6, color: 'C9A84C', space: 4 } },
+      }));
+      continue;
+    }
+
+    if (/^---/.test(line)) {
+      if (inTable) flushTable();
+      children.push(new Paragraph({
+        children: [new TextRun({ text: '' })],
+        border: { bottom: { style: BorderStyle.SINGLE, size: 2, color: 'E2E8F0', space: 2 } },
+        spacing: { before: 80, after: 80 },
+      }));
+      continue;
+    }
+
+    // Pipe-delimited table row  (| col | col | ...)
+    if (/^\|/.test(line)) {
+      const cells = line.split('|').map(c => c.trim()).filter(c => c.length > 0);
+      // Skip separator rows like |---|---|
+      if (cells.every(c => /^[-: ]+$/.test(c))) { inTable = true; continue; }
+      const isHeader = !inTable;
+      inTable = true;
+      tableRows.push(new TableRow({
+        tableHeader: isHeader,
+        children: cells.map(cell => new TableCell({
+          children: [new Paragraph({
+            children: [new TextRun({ text: cell, bold: isHeader, size: isHeader ? 18 : 19, font: 'Arial', color: isHeader ? 'FFFFFF' : '334155' })],
+          })],
+          shading: isHeader ? { type: ShadingType.CLEAR, fill: '334155' } : undefined,
+          margins: {
+            top: convertInchesToTwip(0.07),
+            bottom: convertInchesToTwip(0.07),
+            left: convertInchesToTwip(0.12),
+            right: convertInchesToTwip(0.12),
+          },
+        })),
+      }));
+      continue;
+    }
+
+    if (inTable) flushTable();
+
+    // Bold timestamp line: **10:00 AM** — Task
+    const boldLine = line.match(/^\*\*([^*]+)\*\*\s*(?:—|-|–)?\s*(.*)/);
+    if (boldLine) {
+      children.push(new Paragraph({
+        children: [
+          new TextRun({ text: boldLine[1], bold: true, size: 21, font: 'Arial', color: '1E293B' }),
+          ...(boldLine[2] ? [new TextRun({ text: '  —  ' + boldLine[2], size: 21, font: 'Arial', color: '475569' })] : []),
+        ],
+        spacing: { after: 80 },
+        border: { left: { style: BorderStyle.SINGLE, size: 12, color: 'C9A84C', space: 8 } },
+      }));
+      continue;
+    }
+
+    // Checkbox-style bullets (- [ ] or - )
+    if (/^- \[ \]/.test(line) || /^- \[x\]/i.test(line)) {
+      const checked = /^- \[x\]/i.test(line);
+      const text = line.replace(/^- \[[x ]\]\s*/i, '');
+      children.push(new Paragraph({
+        children: [new TextRun({ text: (checked ? '☑  ' : '☐  ') + text, size: 20, font: 'Arial', color: '334155' })],
+        indent: { left: convertInchesToTwip(0.25) },
+        spacing: { after: 60 },
+      }));
+      continue;
+    }
+
+    if (/^  - /.test(line)) {
+      children.push(new Paragraph({
+        children: parseInline(line.slice(4), { size: 19 }),
+        indent: { left: convertInchesToTwip(0.6) },
+        spacing: { after: 40 },
+        bullet: { level: 1 },
+      }));
+      continue;
+    }
+
+    if (/^- /.test(line)) {
+      const text = line.slice(2);
+      // 📞 prefix — phone-confirm item
+      const isPhoneItem = text.startsWith('📞');
+      children.push(new Paragraph({
+        children: parseInline(text, { size: 20, color: isPhoneItem ? 'C9A84C' : '334155' }),
+        indent: { left: convertInchesToTwip(0.25) },
+        spacing: { after: 60 },
+        bullet: { level: 0 },
+      }));
+      continue;
+    }
+
+    // Default body text
+    children.push(new Paragraph({
+      children: parseInline(line, { size: 20, font: 'Arial' }),
+      spacing: { after: 80 },
+    }));
+  }
+
+  if (inTable) flushTable();
+  void noBorder; // suppress unused var warning
+
+  return children;
+}
+
 // ─── MAIN EXPORT ────────────────────────────────────────────────────────────
 export async function buildDocx(
   content: string,
@@ -469,6 +635,9 @@ export async function buildDocx(
       break;
     case 'grid':
       children = buildGrid(lines, coupleName, weddingDate);
+      break;
+    case 'coordinator':
+      children = buildCoordinatorLayout(lines, coupleName, weddingDate);
       break;
     default:
       children = buildSimple(lines, coupleName, weddingDate);

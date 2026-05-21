@@ -19,9 +19,10 @@ interface Props {
   content: string;
   chatHistory: ChatMessage[];
   onTimelineUpdate: (newContent: string, newHistory: ChatMessage[]) => void;
+  weddingContext?: Record<string, unknown>;
 }
 
-export default function ChatPanel({ timelineId, content, chatHistory, onTimelineUpdate }: Props) {
+export default function ChatPanel({ timelineId, content, chatHistory, onTimelineUpdate, weddingContext }: Props) {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>(chatHistory);
   const [input, setInput] = useState('');
@@ -49,6 +50,7 @@ export default function ChatPanel({ timelineId, content, chatHistory, onTimeline
           message: text.trim(),
           currentContent: content,
           chatHistory: updatedHistory,
+          weddingContext,
         }),
       });
 

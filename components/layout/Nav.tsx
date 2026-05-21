@@ -14,20 +14,39 @@ interface NavProps {
 
 export default function Nav({ user, plan: planProp }: NavProps) {
   const router = useRouter();
+  // currentUser starts as the passed prop (could be undefined = not yet known)
+  const [currentUser, setCurrentUser] = useState<{ email?: string } | null | undefined>(user);
   const [plan, setPlan] = useState(planProp || '');
 
-  // Fetch plan on mount when user is present and plan wasn't passed as prop
   useEffect(() => {
-    if (!user || planProp) return;
     const supabase = createClient();
-    supabase
-      .from('subscriptions')
-      .select('plan')
-      .single()
-      .then(({ data }) => {
+
+    const fetchPlan = (uid: string) => {
+      if (planProp) return;
+      supabase.from('subscriptions').select('plan').eq('user_id', uid).single().then(({ data }) => {
         if (data?.plan) setPlan(data.plan);
       });
-  }, [user, planProp]);
+    };
+
+    if (user !== undefined) {
+      // user was explicitly passed — use it directly
+      setCurrentUser(user);
+      if (user?.email) {
+        // Need user_id to fetch plan — get it via getUser
+        supabase.auth.getUser().then(({ data }) => {
+          if (data.user) fetchPlan(data.user.id);
+        });
+      }
+      return;
+    }
+
+    // No user prop passed — auto-detect session from Supabase
+    supabase.auth.getUser().then(({ data }) => {
+      const u = data.user ?? null;
+      setCurrentUser(u);
+      if (u) fetchPlan(u.id);
+    });
+  }, [user, planProp]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleSignOut = async () => {
     const supabase = createClient();
@@ -39,7 +58,7 @@ export default function Nav({ user, plan: planProp }: NavProps) {
   return (
     <header className="border-b border-[#C9A84C]/15 bg-[#FAF7F2]/90 backdrop-blur-md sticky top-0 z-50">
       <div className="max-w-6xl mx-auto px-6 py-3 flex items-center justify-between">
-        <Link href={user ? '/dashboard' : '/'} className="flex items-center gap-2.5">
+        <Link href={currentUser ? '/dashboard' : '/'} className="flex items-center gap-2.5">
           <div className="w-8 h-8 relative">
             <Image src="/Logo.png" alt="Sundial" fill className="object-contain" />
           </div>
@@ -47,7 +66,7 @@ export default function Nav({ user, plan: planProp }: NavProps) {
         </Link>
 
         <nav className="flex items-center gap-1">
-          {user ? (
+          {currentUser ? (
             <>
               <Link href="/generate" className="hidden sm:inline-flex px-3 py-1.5 text-sm text-slate-600 hover:text-slate-900 rounded-lg hover:bg-slate-100 transition-colors">
                 Generate

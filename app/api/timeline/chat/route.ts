@@ -8,8 +8,52 @@ export async function POST(req: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const { message, currentContent, chatHistory } = await req.json();
+  const { message, currentContent, chatHistory, weddingContext } = await req.json();
   if (!message || !currentContent) return NextResponse.json({ error: 'message and currentContent required' }, { status: 400 });
+
+  // Build augmented system prompt with original form data if available
+  let systemPrompt = CHAT_SYSTEM_PROMPT;
+  if (weddingContext && typeof weddingContext === 'object') {
+    const ctx = weddingContext as Record<string, unknown>;
+    const lines: string[] = [];
+    if (ctx.person1Name) lines.push(`Couple: ${ctx.person1Name} & ${ctx.person2Name}`);
+    if (ctx.weddingDate) lines.push(`Wedding date: ${ctx.weddingDate}`);
+    if (ctx.ceremonyType) lines.push(`Ceremony type: ${ctx.ceremonyType}`);
+    if (ctx.guestCount) lines.push(`Guest count: ${ctx.guestCount}`);
+    if (ctx.weddingPartySize) lines.push(`Wedding party: ${ctx.weddingPartySize}`);
+    if (ctx.gettingReadyAddress) {
+      const name = ctx.gettingReadyName ? `${ctx.gettingReadyName} — ` : '';
+      const avail = ctx.gettingReadyAvailableFrom ? ` (available from ${ctx.gettingReadyAvailableFrom})` : '';
+      lines.push(`Getting ready: ${name}${ctx.gettingReadyAddress}${avail}`);
+    }
+    if (ctx.ceremonyAddress) {
+      const name = ctx.ceremonyName ? `${ctx.ceremonyName} — ` : '';
+      lines.push(`Ceremony: ${name}${ctx.ceremonyAddress}`);
+    }
+    if (ctx.receptionAddress) {
+      const name = ctx.receptionName ? `${ctx.receptionName} — ` : '';
+      const stop = ctx.receptionHardStop ? ` (hard stop: ${ctx.receptionHardStop})` : '';
+      lines.push(`Reception: ${name}${ctx.receptionAddress}${stop}`);
+    }
+    if (ctx.leadPhotographer) lines.push(`Lead photographer: ${ctx.leadPhotographer}`);
+    if (ctx.secondShooter) lines.push(`Second shooter: ${ctx.secondShooter}`);
+    if (ctx.videographer) lines.push(`Videographer: ${ctx.videographer}`);
+    if (ctx.coordinator) lines.push(`Coordinator: ${ctx.coordinator}`);
+    const vendors = ctx.vendorCoverages as Array<{ vendorType: string; companyName?: string; coverageStart: string; coverageEnd: string; notes?: string }> | undefined;
+    if (vendors?.length) {
+      lines.push(`Vendor coverage:`);
+      for (const v of vendors) {
+        lines.push(`  - ${v.vendorType}${v.companyName ? ` (${v.companyName})` : ''}: ${v.coverageStart}–${v.coverageEnd}${v.notes ? ` — ${v.notes}` : ''}`);
+      }
+    }
+    if (ctx.additionalNotes) lines.push(`Original notes from form: ${ctx.additionalNotes}`);
+    if (ctx.dressAttire) lines.push(`Attire: ${ctx.dressAttire}`);
+    if (ctx.package) lines.push(`Package: ${ctx.package}`);
+
+    if (lines.length > 0) {
+      systemPrompt = CHAT_SYSTEM_PROMPT + `\n\n---\nORIGINAL WEDDING FORM DATA (what was entered when this timeline was created):\n${lines.join('\n')}\n\nYou have access to all of this. When asked "what was on the form", "what was submitted", "what vendor info do we have", or similar — answer directly from the above. Never say you don't have the original form data.`;
+    }
+  }
 
   const messages: Array<{ role: 'user' | 'assistant'; content: string }> = [
     ...(chatHistory as ChatMessage[]).map(m => ({ role: m.role, content: m.content })),
@@ -34,7 +78,7 @@ export async function POST(req: NextRequest) {
         const response = await anthropic.messages.stream({
           model: 'claude-sonnet-4-5',
           max_tokens: 4096,
-          system: CHAT_SYSTEM_PROMPT,
+          system: systemPrompt,
           messages,
         });
 
